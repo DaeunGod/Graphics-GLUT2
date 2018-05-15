@@ -16,7 +16,21 @@ GLint loc_ModelViewProjectionMatrix, loc_primitive_color; // indices of uniform 
 #define CAM_TRANSLATION_SPEED 0.25f
 #define CAM_ROTATION_SPEED 0.1f
 
-#define NUMBER_OF_CAMERAS 3
+#define NUMBER_OF_CAMERAS 4
+
+typedef struct _CAMERA {
+	glm::vec3 pos, center;
+	glm::vec3 uaxis, vaxis, naxis;
+	float fov_y, aspect_ratio, near_clip, far_clip;
+	int move_status;
+	int rotateDirection;
+
+	void move(glm::vec3 dir) {
+		pos += dir;
+	}
+} CAMERA;
+CAMERA camera[NUMBER_OF_CAMERAS];
+int currentCamera = 0;
 
 glm::mat4 ModelViewProjectionMatrix;
 glm::mat4 ModelViewMatrix, ViewMatrix[NUMBER_OF_CAMERAS], ProjectionMatrix[NUMBER_OF_CAMERAS];
@@ -28,14 +42,7 @@ typedef struct _VIEWPORT {
 } VIEWPORT;
 VIEWPORT viewport[NUMBER_OF_CAMERAS];
 
-typedef struct _CAMERA {
-	glm::vec3 pos, center;
-	glm::vec3 uaxis, vaxis, naxis;
-	float fov_y, aspect_ratio, near_clip, far_clip;
-	int move_status;
-} CAMERA;
-CAMERA camera[NUMBER_OF_CAMERAS];
-int currentCamera = 0;
+
 
 typedef struct _CALLBACK_CONTEXT {
 	int left_button_status, rotation_mode_cow, timestamp_cow;
@@ -45,11 +52,12 @@ typedef struct _CALLBACK_CONTEXT {
 CALLBACK_CONTEXT cc;
 
 
-
+bool keyState[108] = { 0 };
 void initialize_camera(void);
 void motion(int x, int y);
 void mousepress(int button, int state, int x, int y);
 void mousewheel(int button, int dir, int x, int y);
+void keySpecialOperation();
 
 void set_ViewMatrix_from_camera_frame(glm::mat4 &_ViewMatrix, CAMERA &_camera) {
 	_ViewMatrix = glm::mat4(1.0f);
@@ -83,6 +91,8 @@ void renew_cam_orientation_rotation_around_axis (CAMERA &_camera, float angle, g
 }
 
 void display(void) {
+	keySpecialOperation();
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	 
 	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
@@ -90,7 +100,11 @@ void display(void) {
 			viewport[i].w, viewport[i].h);
 
 		glLineWidth(2.0f);
-		draw_axes(i);
+		draw_axes(ViewMatrix[i], i);
+		//for(int j=0; j<NUMBER_OF_CAMERAS; j++)
+		
+		draw_camera_axex(i);
+		//printf("%f %f %f\n", camera[i].pos.x, camera[i].pos.y, camera[i].pos.z);
 		glLineWidth(1.0f);
 
 		draw_static_object(&(static_objects[OBJ_BUILDING]), 0, i);
@@ -169,7 +183,83 @@ void keyboard(unsigned char key, int x, int y) {
 		}
 		glutPostRedisplay();
 		break;
+
+
+	case 'q':
+		camera[currentCamera].rotateDirection = (camera[currentCamera].rotateDirection + 1) % 3;
+		
+		break;
 	}
+}
+
+void keySpecial(int key, int x, int y) {
+	switch (key) {
+	case GLUT_KEY_LEFT:
+		keyState[GLUT_KEY_LEFT] = true;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_RIGHT:
+		keyState[GLUT_KEY_RIGHT] = true;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_DOWN:
+		keyState[GLUT_KEY_DOWN] = true;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_UP:
+		keyState[GLUT_KEY_UP] = true;
+		glutPostRedisplay();
+		break;
+	}
+}
+
+void keySpecialUp(int key, int x, int y) {
+	switch (key) {
+	case GLUT_KEY_LEFT:
+		keyState[GLUT_KEY_LEFT] = false;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_RIGHT:
+		keyState[GLUT_KEY_RIGHT] = false;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_DOWN:
+		keyState[GLUT_KEY_DOWN] = false;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_UP:
+		keyState[GLUT_KEY_UP] = false;
+		glutPostRedisplay();
+		break;
+	}
+}
+
+void keySpecialOperation() {
+	Object& obj = static_objects[OBJ_COW];
+	CAMERA& cam = camera[3];
+	
+	if (keyState[GLUT_KEY_LEFT] == true) {
+		obj.move(0, glm::vec3(1.0f, 0.0f, 0.0f));
+		cam.move(glm::vec3(0.0f, -1.0f, 0.0f));
+		//obj->setPosition(obj->getPosition() - glm::vec3(3.0f, 0.0f, 0.0f));
+	}
+	if (keyState[GLUT_KEY_RIGHT] == true) {
+		//obj->setPosition(obj->getPosition() + glm::vec3(3.0f, 0.0f, 0.0f));
+		obj.move(0, glm::vec3(-1.0f, 0.0f, 0.0f));
+		cam.move(glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	if (keyState[GLUT_KEY_UP] == true) {
+		//obj->setPosition(obj->getPosition() + glm::vec3(0.0f, 3.0f, 0.0f));
+		obj.move(0, glm::vec3(0.0f, 1.0f, 0.0f));
+		cam.move(glm::vec3(0.0f, 0.0f, 1.0f));
+	}
+	if (keyState[GLUT_KEY_DOWN] == true) {
+		//obj->setPosition(obj->getPosition() - glm::vec3(0.0f, 3.0f, 0.0f));
+		obj.move(0, glm::vec3(0.0f, -1.0f, 0.0f));
+		cam.move(glm::vec3(0.0f, 0.0f, -1.0f));
+	}
+	printf("%f %f %f\n", camera[3].pos.x, camera[3].pos.y, camera[3].pos.z);
+	set_ViewMatrix_from_camera_frame(ViewMatrix[3], camera[3]);
 }
 
 void reshape(int width, int height) {
@@ -178,15 +268,23 @@ void reshape(int width, int height) {
 	//glViewport(0, 0, width, height);
 
 	viewport[0].x = viewport[0].y = 0;
-	viewport[0].w = (int)(0.70f*width); viewport[0].h = (int)(height);
+	viewport[0].w = (int)(0.60f*width); viewport[0].h = (int)(height);
 
-	viewport[1].x = (int)(0.70f*width); viewport[1].y = 0;
-	viewport[1].w = (int)(0.30f*width); viewport[1].h = (int)(0.50f*height);
+	viewport[1].x = (int)(0.60f*width); viewport[1].y = 0;
+	viewport[1].w = (int)(0.40f*width); viewport[1].h = (int)(0.40f*height);
 
-	viewport[2].x = (int)(0.70f*width); viewport[2].y = (int)(0.50f*height);
-	viewport[2].w = (int)(0.30f*width); viewport[2].h = (int)(0.50f*height);
+	viewport[2].x = (int)(0.60f*width); viewport[2].y = (int)(0.40f*height);
+	viewport[2].w = (int)(0.40f*width); viewport[2].h = (int)(0.30f*height);
+
+	viewport[3].x = (int)(0.60f*width); viewport[3].y = (int)(0.70f*height);
+	viewport[3].w = (int)(0.40f*width); viewport[3].h = (int)(0.30f*height);
 	
-	camera[0].aspect_ratio = (float)width / height;
+	//camera[0].aspect_ratio = (float)width / height;
+	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
+		camera[i].aspect_ratio = (float)viewport[i].w / viewport[i].h;
+		ProjectionMatrix[i] = glm::perspective(camera[i].fov_y*TO_RADIAN, camera[i].aspect_ratio, camera[i].near_clip, camera[i].far_clip);
+	}
+	/*camera[0].aspect_ratio = (float)viewport[0].w / viewport[0].h;
 	ProjectionMatrix[0] = glm::perspective(camera[0].fov_y*TO_RADIAN, camera[0].aspect_ratio, camera[0].near_clip, camera[0].far_clip);
 
 	camera[1].aspect_ratio = (float)width / height;
@@ -194,6 +292,9 @@ void reshape(int width, int height) {
 
 	camera[2].aspect_ratio = (float)width / height;
 	ProjectionMatrix[2] = glm::perspective(camera[2].fov_y*TO_RADIAN, camera[2].aspect_ratio, camera[2].near_clip, camera[2].far_clip);
+
+	camera[3].aspect_ratio = (float)width / height;
+	ProjectionMatrix[3] = glm::perspective(camera[3].fov_y*TO_RADIAN, camera[3].aspect_ratio, camera[3].near_clip, camera[3].far_clip);*/
 
 	glutPostRedisplay();
 }
@@ -208,6 +309,8 @@ void timer_scene(int timestamp_scene) {
 void register_callbacks(void) {
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
+	glutSpecialFunc(keySpecial);
+	glutSpecialUpFunc(keySpecialUp);
 	glutMouseFunc(mousepress);
 	glutMouseWheelFunc(mousewheel);
 	glutMotionFunc(motion);
@@ -259,16 +362,21 @@ void motion(int x, int y) {
 	case GLUT_ACTIVE_SHIFT:
 		renew_cam_position_along_axis(camera[currentCamera], dely, camera[currentCamera].vaxis);
 		renew_cam_position_along_axis(camera[currentCamera], delx, camera[currentCamera].uaxis);
-		printf("motion1\n");
+		//printf("motion1\n");
 		break;
-	case GLUT_ACTIVE_SHIFT | GLUT_ACTIVE_CTRL:
+	/*case GLUT_ACTIVE_SHIFT | GLUT_ACTIVE_CTRL:
 		renew_cam_orientation_rotation_around_axis(camera[currentCamera], dely, -camera[currentCamera].uaxis);
 		printf("motion2\n");
-		break;
+		break;*/
 	default:
 		renew_cam_position_along_axis(camera[currentCamera], dely, -camera[currentCamera].naxis);
-		renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, -camera[currentCamera].vaxis);
-		printf("motion3\n");
+		if(camera[currentCamera].rotateDirection == 0)
+			renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, -camera[currentCamera].vaxis);
+		if (camera[currentCamera].rotateDirection == 1)
+			renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, camera[currentCamera].naxis);
+		if (camera[currentCamera].rotateDirection == 2)
+			renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, -camera[currentCamera].uaxis);
+		//printf("motion3\n");
 		break;
 	}
 	set_ViewMatrix_from_camera_frame(ViewMatrix[currentCamera], camera[currentCamera]);
@@ -302,20 +410,24 @@ void initialize_OpenGL(void) {
 	glClearColor(0.12f, 0.18f, 0.12f, 1.0f);
 
 	
-
+	ViewMatrix[0] = glm::lookAt(camera[0].pos, camera[0].center, camera[0].vaxis);
+	ViewMatrix[1] = glm::lookAt(camera[1].pos, camera[1].center, camera[1].vaxis);
+	ViewMatrix[2] = glm::lookAt(camera[2].pos, camera[2].center, camera[2].vaxis);
 	if (1) {
-		ViewMatrix[2] = glm::lookAt(glm::vec3(120.0f, 90.0f, 600.0f), glm::vec3(120.0f, 90.0f, 0.0f),
-			glm::vec3(-10.0f, 0.0f, 0.0f));
+		//ViewMatrix[2] = glm::lookAt(glm::vec3(120.0f, 90.0f, 600.0f), glm::vec3(120.0f, 90.0f, 0.0f),
+		//	glm::vec3(-10.0f, 0.0f, 0.0f));
+		
 	}
 	if (1) {
-		ViewMatrix[1] = glm::lookAt(glm::vec3(500.0f, 90.0f, 25.0f), glm::vec3(0.0f, 90.0f, 25.0f),
-			glm::vec3(0.0f, 0.0f, 1.0f));
+		/*ViewMatrix[1] = glm::lookAt(glm::vec3(500.0f, 90.0f, 25.0f), glm::vec3(0.0f, 90.0f, 25.0f),
+			glm::vec3(0.0f, 0.0f, 1.0f));*/
+		
 	}
 
 	if (1) {
 		//ViewMatrix = glm::lookAt(glm::vec3(600.0f, 600.0f, 200.0f), glm::vec3(125.0f, 80.0f, 25.0f),
 		//	glm::vec3(0.0f, 0.0f, 1.0f));
-		ViewMatrix[0] = glm::lookAt(camera[currentCamera].pos, camera[currentCamera].center, camera[currentCamera].vaxis);
+		
 	}
 }
 
@@ -336,6 +448,8 @@ void initialize_camera(void) {
 	camera[0].uaxis = glm::normalize(glm::cross(_vup, _vpn));
 	camera[0].vaxis = glm::normalize(glm::cross(_vpn, camera[0].uaxis));
 	camera[0].naxis = glm::normalize(_vpn);
+
+	camera[0].rotateDirection = 0;
 	//camera.naxis = glm::vec3(0.0f, -1.0f, 0.0f);
 
 	camera[0].move_status = 0;
@@ -347,12 +461,14 @@ void initialize_camera(void) {
 	set_ViewMatrix_from_camera_frame(ViewMatrix[0], camera[0]);
 
 	////Camera 1
-	camera[1].pos = glm::vec3(0.0f, 50.0f, 0.0f);
-	camera[1].uaxis = glm::vec3(0.0f, 0.0f, -1.0f);
-	camera[1].vaxis = glm::vec3(-1.0f, 0.0f, 0.0f);
-	camera[1].naxis = glm::vec3(0.0f, 1.0f, 0.0f);
+	camera[1].pos = glm::vec3(500.0f, 90.0f, 25.0f);
+	camera[1].center = glm::vec3(0.0f, 90.0f, 25.0f);
 
-	//renew_cam_orientation_rotation_around_axis(1, 30.0f, camera[1].naxis);
+	_vup = glm::vec3(0.0f, 0.0f, 1.0f);
+	_vpn = camera[1].pos - camera[1].center;
+	camera[1].uaxis = glm::normalize(glm::cross(_vup, _vpn));
+	camera[1].vaxis = glm::normalize(glm::cross(_vpn, camera[1].uaxis));
+	camera[1].naxis = glm::normalize(_vpn);
 
 	camera[1].move_status = 0;
 	camera[1].fov_y = 30.0f;
@@ -362,19 +478,37 @@ void initialize_camera(void) {
 	set_ViewMatrix_from_camera_frame(ViewMatrix[1], camera[1]);
 
 
-	camera[2].pos = glm::vec3(0.0f, 50.0f, 0.0f);
-	camera[2].uaxis = glm::vec3(0.0f, 0.0f, -1.0f);
-	camera[2].vaxis = glm::vec3(-1.0f, 0.0f, 0.0f);
-	camera[2].naxis = glm::vec3(0.0f, 1.0f, 0.0f);
+	camera[2].pos = glm::vec3(120.0f, 90.0f, 200.0f);
+	camera[2].center = glm::vec3(120.0f, 90.0f, 0.0f);
 
-	//renew_cam_orientation_rotation_around_axis(1, 30.0f, camera[1].naxis);
+	_vup = glm::vec3(-1.0f, 0.0f, 0.0f);
+	_vpn = camera[2].pos - camera[2].center;
+	camera[2].uaxis = glm::normalize(glm::cross(_vup, _vpn));
+	camera[2].vaxis = glm::normalize(glm::cross(_vpn, camera[2].uaxis));
+	camera[2].naxis = glm::normalize(_vpn);
 
 	camera[2].move_status = 0;
-	camera[2].fov_y = 30.0f;
+	camera[2].fov_y = 90.0f;
 	camera[2].aspect_ratio = 1.0f; // will be set when the viewing window pops up.
 	camera[2].near_clip = 1.0f;
 	camera[2].far_clip = 10000.0f;
 	set_ViewMatrix_from_camera_frame(ViewMatrix[2], camera[2]);
+
+	camera[3].pos = glm::vec3(223.0f, 153.0f, 42.0f);
+	camera[3].center = glm::vec3(183.0f, 120.0f, 11.0f);
+
+	_vup = glm::vec3(0.0f, 0.0f, 1.0f);
+	_vpn = camera[3].pos - camera[3].center;
+	camera[3].uaxis = glm::normalize(glm::cross(_vup, _vpn));
+	camera[3].vaxis = glm::normalize(glm::cross(_vpn, camera[3].uaxis));
+	camera[3].naxis = glm::normalize(_vpn);
+
+	camera[3].move_status = 0;
+	camera[3].fov_y = 90.0f;
+	camera[3].aspect_ratio = 1.0f; // will be set when the viewing window pops up.
+	camera[3].near_clip = 1.0f;
+	camera[3].far_clip = 100.0f;
+	set_ViewMatrix_from_camera_frame(ViewMatrix[3], camera[3]);
 
 	//
 

@@ -25,6 +25,10 @@ typedef struct _Object {
 	int n_geom_instances;
 	glm::mat4 ModelMatrix[N_MAX_GEOM_COPIES];
 	Material material[N_MAX_GEOM_COPIES];
+
+	void move(int index, glm::vec3 dir) {
+		ModelMatrix[index] = glm::translate(ModelMatrix[index], dir);
+	}
 } Object;
 
 #define N_MAX_STATIC_OBJECTS		10
@@ -302,6 +306,7 @@ void define_static_objects(void) {
 		90.0f*TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
 	static_objects[OBJ_COW].ModelMatrix[0] = glm::rotate(static_objects[OBJ_COW].ModelMatrix[0],
 		90.0f*TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+
  
 	static_objects[OBJ_COW].material[0].emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	static_objects[OBJ_COW].material[0].ambient = glm::vec4(0.329412f, 0.223529f, 0.027451f, 1.0f);
@@ -353,8 +358,9 @@ void define_axes(void) {
 }
 
 #define WC_AXIS_LENGTH		60.0f
-void draw_axes(int cameraIndex) {
-	ModelViewMatrix = glm::scale(ViewMatrix[cameraIndex], glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
+void draw_axes(glm::mat4 obj, int cameraIndex) {
+	//ModelViewMatrix = glm::scale(ViewMatrix[cameraIndex], glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
+	ModelViewMatrix = glm::scale(obj, glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
 	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
 	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
 
@@ -412,7 +418,36 @@ void draw_animated_tiger(int cameraIndex) {
 
 	ModelViewProjectionMatrix = glm::scale(ModelViewProjectionMatrix, glm::vec3(20.0f, 20.0f, 20.0f));
 	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
-	draw_axes(cameraIndex);
+	draw_axes(ViewMatrix[cameraIndex], cameraIndex);
+}
+
+void draw_camera_axex(int index) {
+	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
+		if (i == index)
+			continue;
+
+		glm::mat4 obj = glm::translate(glm::mat4(1), camera[i].pos);
+		glm::mat4 rot = glm::mat4(1);
+
+		rot[0][0] = camera[i].uaxis.x; rot[1][0] = camera[i].vaxis.x; rot[2][0] = camera[i].naxis.x;
+		rot[0][1] = camera[i].uaxis.y; rot[1][1] = camera[i].vaxis.y; rot[2][1] = camera[i].naxis.y;
+		rot[0][2] = camera[i].uaxis.z; rot[1][2] = camera[i].vaxis.z; rot[2][2] = camera[i].naxis.z;
+
+		obj = obj * rot;
+		ModelViewMatrix = ViewMatrix[index] * obj;
+		ModelViewMatrix = glm::scale(ModelViewMatrix, glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
+		ModelViewProjectionMatrix = ProjectionMatrix[index] * ModelViewMatrix;
+		glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
+
+		glBindVertexArray(VAO_axes);
+		glUniform3fv(loc_primitive_color, 1, axes_color[0]);
+		glDrawArrays(GL_LINES, 0, 2);
+		glUniform3fv(loc_primitive_color, 1, axes_color[1]);
+		glDrawArrays(GL_LINES, 2, 2);
+		glUniform3fv(loc_primitive_color, 1, axes_color[2]);
+		glDrawArrays(GL_LINES, 4, 2);
+		glBindVertexArray(0);
+	}
 }
 
 void cleanup_OpenGL_stuffs(void) {

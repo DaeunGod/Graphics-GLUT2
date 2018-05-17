@@ -85,8 +85,8 @@ void compute_AABB(Object *obj_ptr) {
 }
 	 
 void prepare_geom_of_static_object(Object *obj_ptr) {
-	int i, n_bytes_per_vertex, n_bytes_per_triangle;
-	char filename[512];
+	int n_bytes_per_vertex, n_bytes_per_triangle;
+	//char filename[512];
 
 	n_bytes_per_vertex = obj_ptr->n_fields * sizeof(float); // 3 for vertex, 3 for normal, and 2 for texcoord
 	n_bytes_per_triangle = 3 * n_bytes_per_vertex;
@@ -237,7 +237,7 @@ void define_static_objects(void) {
 	static_objects[OBJ_TEAPOT].material[0].ambient = glm::vec4(0.1745f, 0.01175f, 0.01175f, 1.0f);
 	static_objects[OBJ_TEAPOT].material[0].diffuse = glm::vec4(0.61424f, 0.04136f, 0.04136f, 1.0f);
 	static_objects[OBJ_TEAPOT].material[0].specular = glm::vec4(0.727811f, 0.626959f, 0.626959f, 1.0f);
-	static_objects[OBJ_TEAPOT].material[0].exponent = 128.0f*0.6;
+	static_objects[OBJ_TEAPOT].material[0].exponent = 128.0f*0.6f;
 
 	// new_chair
 	strcpy(static_objects[OBJ_NEW_CHAIR].filename, "Data/new_chair_vnt.geom");
@@ -547,4 +547,6 @@ void cleanup_OpenGL_stuffs(void) {
 
 	glDeleteVertexArrays(1, &VAO_axes);
 	glDeleteBuffers(1, &VBO_axes);
+
+	
 }

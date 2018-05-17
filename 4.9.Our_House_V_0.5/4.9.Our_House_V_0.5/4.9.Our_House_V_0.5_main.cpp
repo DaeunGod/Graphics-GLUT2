@@ -18,12 +18,165 @@ GLint loc_ModelViewProjectionMatrix, loc_primitive_color; // indices of uniform 
 
 #define NUMBER_OF_CAMERAS 4
 
+#define BUFFER_OFFSET(offset) ((GLvoid *) (offset))
+
+#define LOC_VERTEX 0
+
+GLfloat line_color[3] = { 0.4533f, 0.2334f, 0.422f };
 typedef struct _CAMERA {
 	glm::vec3 pos, center;
 	glm::vec3 uaxis, vaxis, naxis;
 	float fov_y, aspect_ratio, near_clip, far_clip;
 	int move_status;
 	int rotateDirection;
+
+	bool isViewingVolumeVisible = true;
+
+	typedef struct _VIEWINGVOLUME {
+		GLfloat line[24][3];
+		GLuint VBO_line, VAO_line;
+
+		void prepare_line(void) { 	// y = x - win_height/4
+			for (int i = 0; i < 24; i++) {
+				for (int j = 0; j < 3; j++) {
+					line[i][j] = 0;
+				}
+			}
+
+			// Initialize vertex buffer object.
+			glGenBuffers(1, &VBO_line);
+
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_line);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(line), line, GL_STATIC_DRAW);
+
+			// Initialize vertex array object.
+			glGenVertexArrays(1, &VAO_line);
+			glBindVertexArray(VAO_line);
+
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_line);
+			glVertexAttribPointer(LOC_VERTEX, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindVertexArray(0);
+		}
+
+		void update_line(float fov_y, float near_clip, float far_clip, float aspectRatio) { 	// y = x - win_height/4
+			float distance = far_clip - near_clip;
+			float y1 = distance * tan(fov_y*0.5 * TO_RADIAN);
+			//float hFov = 2.0f*atan(aspectRatio*tan(fov_y*0.5f*TO_RADIAN));
+			//float hFov = x1 * aspectRatio;
+			//float y1 = distance * tan(hFov*0.5*TO_RADIAN);
+			float x1 = y1 * aspectRatio;
+			float y2 = near_clip * tan(fov_y*0.5 * TO_RADIAN);
+			float x2 = y2 * aspectRatio;
+			//hFov = 2.0f*atan(aspectRatio*tan(vFov*0.5f));
+
+			printf("%f %f\n", fov_y*TO_RADIAN, distance);
+			/// line
+			line[0][0] = x2;
+			line[0][1] = y2;
+			line[0][2] = -near_clip;
+			line[1][0] = x1;
+			line[1][1] = y1;
+			line[1][2] = -distance;
+
+			line[2][0] = x2;
+			line[2][1] = -y2;
+			line[2][2] = -near_clip;
+			line[3][0] = x1;
+			line[3][1] = -y1;
+			line[3][2] = -distance;
+
+			line[4][0] = -x2;
+			line[4][1] = y2;
+			line[4][2] = -near_clip;
+			line[5][0] = -x1;
+			line[5][1] = y1;
+			line[5][2] = -distance;
+
+			line[6][0] = -x2;
+			line[6][1] = -y2;
+			line[6][2] = -near_clip;
+			line[7][0] = -x1;
+			line[7][1] = -y1;
+			line[7][2] = -distance;
+
+			/// far plane
+			line[8][0] = x1;
+			line[8][1] = y1;
+			line[8][2] = -distance;
+			line[9][0] = x1;
+			line[9][1] = -y1;
+			line[9][2] = -distance;
+
+			line[10][0] = x1;
+			line[10][1] = -y1;
+			line[10][2] = -distance;
+			line[11][0] = -x1;
+			line[11][1] = -y1;
+			line[11][2] = -distance;
+
+			line[12][0] = -x1;
+			line[12][1] = -y1;
+			line[12][2] = -distance;
+			line[13][0] = -x1;
+			line[13][1] = y1;
+			line[13][2] = -distance;
+
+			line[14][0] = -x1;
+			line[14][1] = y1;
+			line[14][2] = -distance;
+			line[15][0] = x1;
+			line[15][1] = y1;
+			line[15][2] = -distance;
+
+			/// near plane
+			line[16][0] = x2;
+			line[16][1] = y2;
+			line[16][2] = -near_clip;
+			line[17][0] = x2;
+			line[17][1] = -y2;
+			line[17][2] = -near_clip;
+
+			line[18][0] = x2;
+			line[18][1] = -y2;
+			line[18][2] = -near_clip;
+			line[19][0] = -x2;
+			line[19][1] = -y2;
+			line[19][2] = -near_clip;
+
+			line[20][0] = -x2;
+			line[20][1] = -y2;
+			line[20][2] = -near_clip;
+			line[21][0] = -x2;
+			line[21][1] = y2;
+			line[21][2] = -near_clip;
+
+			line[22][0] = -x2;
+			line[22][1] = y2;
+			line[22][2] = -near_clip;
+			line[23][0] = x2;
+			line[23][1] = y2;
+			line[23][2] = -near_clip;
+
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_line);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(line), line, GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
+
+		void draw_line(void) { // Draw line in its MC.
+							   // y = x - win_height/4
+			//glLineWidth(0.5f);
+			glUniform3fv(loc_primitive_color, 1, line_color);
+			glBindVertexArray(VAO_line);
+			glDrawArrays(GL_LINES, 0, 24);
+			glBindVertexArray(0);
+			//glLineWidth(1.0f);
+		}
+
+	}VIEWINGVOLUME;
+	VIEWINGVOLUME viewingVolume;
 
 	void move(glm::vec3 dir) {
 		pos += dir;
@@ -101,10 +254,7 @@ void display(void) {
 
 		glLineWidth(2.0f);
 		draw_axes(ViewMatrix[i], i);
-		//for(int j=0; j<NUMBER_OF_CAMERAS; j++)
-		
 		draw_camera_axex(i);
-		//printf("%f %f %f\n", camera[i].pos.x, camera[i].pos.y, camera[i].pos.z);
 		glLineWidth(1.0f);
 
 		draw_static_object(&(static_objects[OBJ_BUILDING]), 0, i);
@@ -123,6 +273,8 @@ void display(void) {
 		draw_static_object(&(static_objects[OBJ_FRAME]), 0, i);
 		draw_static_object(&(static_objects[OBJ_NEW_PICTURE]), 0, i);
 		draw_static_object(&(static_objects[OBJ_COW]), 0, i);
+		draw_static_object(&(static_objects[OBJ_COW1]), 0, i);
+		draw_static_object(&(static_objects[OBJ_COW2]), 0, i);
 
 		draw_animated_tiger(i);
 	}
@@ -235,7 +387,7 @@ void keySpecialUp(int key, int x, int y) {
 }
 
 void keySpecialOperation() {
-	Object& obj = static_objects[OBJ_COW];
+	Object& obj = static_objects[OBJ_COW1];
 	CAMERA& cam = camera[3];
 	
 	if (keyState[GLUT_KEY_LEFT] == true) {
@@ -258,7 +410,7 @@ void keySpecialOperation() {
 		obj.move(0, glm::vec3(0.0f, -1.0f, 0.0f));
 		cam.move(glm::vec3(0.0f, 0.0f, -1.0f));
 	}
-	printf("%f %f %f\n", camera[3].pos.x, camera[3].pos.y, camera[3].pos.z);
+	//printf("%f %f %f\n", obj.pos.x, obj.pos.y, obj.pos.z);
 	set_ViewMatrix_from_camera_frame(ViewMatrix[3], camera[3]);
 }
 
@@ -283,6 +435,8 @@ void reshape(int width, int height) {
 	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
 		camera[i].aspect_ratio = (float)viewport[i].w / viewport[i].h;
 		ProjectionMatrix[i] = glm::perspective(camera[i].fov_y*TO_RADIAN, camera[i].aspect_ratio, camera[i].near_clip, camera[i].far_clip);
+		camera[i].viewingVolume.update_line(camera[i].fov_y, camera[i].near_clip, camera[i].far_clip, camera[i].aspect_ratio);
+		printf("camerai : %d %d %f\n", viewport[i].w, viewport[i].h, camera[i].aspect_ratio);
 	}
 	/*camera[0].aspect_ratio = (float)viewport[0].w / viewport[0].h;
 	ProjectionMatrix[0] = glm::perspective(camera[0].fov_y*TO_RADIAN, camera[0].aspect_ratio, camera[0].near_clip, camera[0].far_clip);
@@ -412,7 +566,7 @@ void initialize_OpenGL(void) {
 	
 	ViewMatrix[0] = glm::lookAt(camera[0].pos, camera[0].center, camera[0].vaxis);
 	ViewMatrix[1] = glm::lookAt(camera[1].pos, camera[1].center, camera[1].vaxis);
-	ViewMatrix[2] = glm::lookAt(camera[2].pos, camera[2].center, camera[2].vaxis);
+	//ViewMatrix[2] = glm::lookAt(camera[2].pos, camera[2].center, camera[2].vaxis);
 	if (1) {
 		//ViewMatrix[2] = glm::lookAt(glm::vec3(120.0f, 90.0f, 600.0f), glm::vec3(120.0f, 90.0f, 0.0f),
 		//	glm::vec3(-10.0f, 0.0f, 0.0f));
@@ -458,6 +612,8 @@ void initialize_camera(void) {
 	camera[0].near_clip = 1.0f;
 	camera[0].far_clip = 10000.0f;
 
+	camera[0].viewingVolume.prepare_line();
+
 	set_ViewMatrix_from_camera_frame(ViewMatrix[0], camera[0]);
 
 	////Camera 1
@@ -474,7 +630,11 @@ void initialize_camera(void) {
 	camera[1].fov_y = 30.0f;
 	camera[1].aspect_ratio = 1.0f; // will be set when the viewing window pops up.
 	camera[1].near_clip = 1.0f;
-	camera[1].far_clip = 10000.0f;
+	camera[1].far_clip = 300.0f;
+
+	camera[1].viewingVolume.prepare_line();
+	
+	
 	set_ViewMatrix_from_camera_frame(ViewMatrix[1], camera[1]);
 
 
@@ -488,10 +648,13 @@ void initialize_camera(void) {
 	camera[2].naxis = glm::normalize(_vpn);
 
 	camera[2].move_status = 0;
-	camera[2].fov_y = 90.0f;
+	camera[2].fov_y = 45.0f;
 	camera[2].aspect_ratio = 1.0f; // will be set when the viewing window pops up.
-	camera[2].near_clip = 1.0f;
-	camera[2].far_clip = 10000.0f;
+	camera[2].near_clip = 100.0f;
+	camera[2].far_clip = 300.0f;
+
+	camera[2].viewingVolume.prepare_line();
+
 	set_ViewMatrix_from_camera_frame(ViewMatrix[2], camera[2]);
 
 	camera[3].pos = glm::vec3(223.0f, 153.0f, 42.0f);
@@ -508,8 +671,14 @@ void initialize_camera(void) {
 	camera[3].aspect_ratio = 1.0f; // will be set when the viewing window pops up.
 	camera[3].near_clip = 1.0f;
 	camera[3].far_clip = 100.0f;
+
+	camera[3].viewingVolume.prepare_line();
 	set_ViewMatrix_from_camera_frame(ViewMatrix[3], camera[3]);
 
+	camera[0].isViewingVolumeVisible = false;
+	camera[1].isViewingVolumeVisible = false;
+	//camera[2].isViewingVolumeVisible = false;
+	camera[3].isViewingVolumeVisible = false;
 	//
 
 	//camera_selected = 0;

@@ -508,6 +508,28 @@ void initialize_camera(void) {
 	camera[CAMERA_PERSPECTIVE3].viewingVolume.prepare_line(true);
 	set_ViewMatrix_from_camera_frame(ViewMatrix[CAMERA_PERSPECTIVE3], camera[CAMERA_PERSPECTIVE3]);
 
+	////Camera 7
+	camera[CAMERA_PERSPECTIVE4].pos = glm::vec3(120.0f, 120.0f, 100.0f);
+	camera[CAMERA_PERSPECTIVE4].center = glm::vec3(130.0f, 55.0f, 33.5f);
+
+	_vup = glm::vec3(0.0f, 0.0f, 1.0f);
+	_vpn = camera[CAMERA_PERSPECTIVE3].pos - camera[CAMERA_PERSPECTIVE4].center;
+	camera[CAMERA_PERSPECTIVE4].uaxis = glm::normalize(glm::cross(_vup, _vpn));
+	camera[CAMERA_PERSPECTIVE4].vaxis = glm::normalize(glm::cross(_vpn, camera[CAMERA_PERSPECTIVE4].uaxis));
+	camera[CAMERA_PERSPECTIVE4].naxis = glm::normalize(_vpn);
+
+	camera[CAMERA_PERSPECTIVE4].move_status = 0;
+	camera[CAMERA_PERSPECTIVE4].fov_y = 30.0f;
+	camera[CAMERA_PERSPECTIVE4].aspect_ratio = 1.0f; // will be set when the viewing window pops up.
+	camera[CAMERA_PERSPECTIVE4].near_clip = 1.0f;
+	camera[CAMERA_PERSPECTIVE4].far_clip = 100.0f;
+	camera[CAMERA_PERSPECTIVE4].cameraOrthoOrPerspective = true;
+
+	//printf("%d \n", camera[CAMERA_PERSPECTIVE3].cameraOrthoOrPerspective);
+
+	camera[CAMERA_PERSPECTIVE4].viewingVolume.prepare_line(true);
+	//set_ViewMatrix_from_camera_frame(ViewMatrix[CAMERA_PERSPECTIVE4], camera[CAMERA_PERSPECTIVE4]);
+
 
 	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
 		camera[i].isViewingVolumeVisible = false;
@@ -517,6 +539,7 @@ void initialize_camera(void) {
 	camera[CAMERA_ORTHO1].isViewingVolumeVisible = true;
 	camera[CAMERA_ORTHO2].isViewingVolumeVisible = true;
 	camera[CAMERA_ORTHO3].isViewingVolumeVisible = true;
+	//camera[CAMERA_PERSPECTIVE4].isViewingVolumeVisible = true;
 	
 
 	//camera_selected = 0;

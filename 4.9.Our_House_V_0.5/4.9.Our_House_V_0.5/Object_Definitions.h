@@ -98,7 +98,8 @@ int ben_vertex_offset[N_BEN_FRAMES];
 GLfloat *ben_vertices[N_BEN_FRAMES];
 int cur_frame_ben = 0;
 
-glm::vec3 ben_pos = glm::vec3(-140.0f, 74.0f, 0.0f);
+glm::vec3 ben_pos = glm::vec3(83.0f, 151.0f, 10.0f);
+float ben_angle = 0.0f;
 
 Material_Parameters material_ben;
 
@@ -184,7 +185,7 @@ void define_static_objects(void) {
 	static_objects[OBJ_TABLE].front_face_mode = GL_CCW;
 	prepare_geom_of_static_object(&(static_objects[OBJ_TABLE]));
 
-	static_objects[OBJ_TABLE].n_geom_instances = 3;
+	static_objects[OBJ_TABLE].n_geom_instances = 4;
 
 	static_objects[OBJ_TABLE].ModelMatrix[0] = glm::translate(glm::mat4(1.0f), glm::vec3(157.0f, 76.5f, 0.0f));
 	static_objects[OBJ_TABLE].ModelMatrix[0] = glm::scale(static_objects[OBJ_TABLE].ModelMatrix[0], 
@@ -208,7 +209,7 @@ void define_static_objects(void) {
 
 	static_objects[OBJ_TABLE].pos[2] = glm::vec3(48.0f, 45.0f, 0.0f);
 	static_objects[OBJ_TABLE].ModelMatrix[2] = glm::translate(glm::mat4(1.0f), static_objects[OBJ_TABLE].pos[2]);
-	static_objects[OBJ_TABLE].ModelMatrix[2] = glm::scale(static_objects[OBJ_TABLE].ModelMatrix[1],
+	static_objects[OBJ_TABLE].ModelMatrix[2] = glm::scale(static_objects[OBJ_TABLE].ModelMatrix[2],
 		glm::vec3(0.8f, 0.6f, 0.6f));
 
 	static_objects[OBJ_TABLE].material[2].emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -217,6 +218,17 @@ void define_static_objects(void) {
 	static_objects[OBJ_TABLE].material[2].specular = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 	static_objects[OBJ_TABLE].material[2].exponent = 128.0f*0.078125f;
 
+	static_objects[OBJ_TABLE].pos[3] = glm::vec3(0.0f, 0.0f, 0.0f);
+	static_objects[OBJ_TABLE].ModelMatrix[3] = glm::translate(glm::mat4(1.0f), static_objects[OBJ_TABLE].pos[3]);
+	static_objects[OBJ_TABLE].ModelMatrix[3] = glm::scale(static_objects[OBJ_TABLE].ModelMatrix[3],
+		glm::vec3(0.8f, 0.6f, 0.6f));
+
+	static_objects[OBJ_TABLE].material[3].emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	static_objects[OBJ_TABLE].material[3].ambient = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
+	static_objects[OBJ_TABLE].material[3].diffuse = glm::vec4(186.0f / 255.0f, 68.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+	static_objects[OBJ_TABLE].material[3].specular = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+	static_objects[OBJ_TABLE].material[3].exponent = 128.0f*0.078125f;
+
 	// Light
 	strcpy(static_objects[OBJ_LIGHT].filename, "Data/Light_vn.geom");
 	static_objects[OBJ_LIGHT].n_fields = 6;
@@ -224,7 +236,7 @@ void define_static_objects(void) {
 	static_objects[OBJ_LIGHT].front_face_mode = GL_CCW;
 	prepare_geom_of_static_object(static_objects + OBJ_LIGHT);
 
-	static_objects[OBJ_LIGHT].n_geom_instances = 5;
+	static_objects[OBJ_LIGHT].n_geom_instances = 8;
 
 	static_objects[OBJ_LIGHT].ModelMatrix[0] = glm::translate(glm::mat4(1.0f), glm::vec3(120.0f, 100.0f, 49.0f));
 	static_objects[OBJ_LIGHT].ModelMatrix[0] = glm::rotate(static_objects[OBJ_LIGHT].ModelMatrix[0],
@@ -355,7 +367,7 @@ void define_static_objects(void) {
 	static_objects[OBJ_NEW_CHAIR].front_face_mode = GL_CCW;
 	prepare_geom_of_static_object(&(static_objects[OBJ_NEW_CHAIR]));
 
-	static_objects[OBJ_NEW_CHAIR].n_geom_instances = 1;
+	static_objects[OBJ_NEW_CHAIR].n_geom_instances = 2;
 
 	static_objects[OBJ_NEW_CHAIR].ModelMatrix[0] = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 104.0f, 0.0f));
 	static_objects[OBJ_NEW_CHAIR].ModelMatrix[0] = glm::scale(static_objects[OBJ_NEW_CHAIR].ModelMatrix[0],
@@ -368,6 +380,19 @@ void define_static_objects(void) {
 	static_objects[OBJ_NEW_CHAIR].material[0].diffuse = glm::vec4(0.5f, 0.5f, 0.4f, 1.0f);
 	static_objects[OBJ_NEW_CHAIR].material[0].specular = glm::vec4(0.7f, 0.7f, 0.04f, 1.0f);
 	static_objects[OBJ_NEW_CHAIR].material[0].exponent = 128.0f*0.078125f;
+
+	static_objects[OBJ_NEW_CHAIR].pos[1] = glm::vec3(250.0f, 104.0f, 0.0f);
+	static_objects[OBJ_NEW_CHAIR].ModelMatrix[1] = glm::translate(glm::mat4(1.0f), static_objects[OBJ_NEW_CHAIR].pos[1]);
+	static_objects[OBJ_NEW_CHAIR].ModelMatrix[1] = glm::scale(static_objects[OBJ_NEW_CHAIR].ModelMatrix[1],
+		glm::vec3(0.8f, 0.8f, 0.8f));
+	static_objects[OBJ_NEW_CHAIR].ModelMatrix[1] = glm::rotate(static_objects[OBJ_NEW_CHAIR].ModelMatrix[1],
+		180.0f*TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+
+	static_objects[OBJ_NEW_CHAIR].material[1].emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	static_objects[OBJ_NEW_CHAIR].material[1].ambient = glm::vec4(0.05f, 0.05f, 0.0f, 1.0f);
+	static_objects[OBJ_NEW_CHAIR].material[1].diffuse = glm::vec4(69.0f/255.0f, 72.0f/255.0f, 1.0f, 1.0f);
+	static_objects[OBJ_NEW_CHAIR].material[1].specular = glm::vec4(0.7f, 0.7f, 0.04f, 1.0f);
+	static_objects[OBJ_NEW_CHAIR].material[1].exponent = 128.0f*0.078125f;
 
 	// frame
 	strcpy(static_objects[OBJ_FRAME].filename, "Data/Frame_vn.geom");
@@ -697,11 +722,17 @@ void prepare_ben(void) {
 }
 
 void draw_ben(int cameraIndex) {
+	glm::mat4 _model = glm::mat4(1.0f);
 
-	ModelViewMatrix = glm::rotate(ViewMatrix[cameraIndex], -90 * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
-	ModelViewMatrix = glm::translate(ModelViewMatrix, ben_pos);
-	ModelViewMatrix = glm::scale(ModelViewMatrix, glm::vec3(50.0f, -50.0f, -1.0f));
-	//ModelViewMatrix = glm::rotate(ModelViewMatrix, -90*TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+
+	_model = glm::translate(glm::mat4(1.0f), ben_pos);
+	_model = glm::scale(_model, glm::vec3(30.0f, 5.0f, 30.0f));
+	
+	_model = glm::rotate(_model, -ben_angle, glm::vec3(0.0f, 1.0f, 0.0f));
+	_model = glm::rotate(_model, -90.0f * TO_RADIAN, glm::vec3(0.0f, 1.0f, 0.0f));
+
+
+	ModelViewMatrix = ViewMatrix[cameraIndex] * _model;
 	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
 
 	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
@@ -711,6 +742,29 @@ void draw_ben(int cameraIndex) {
 	glBindVertexArray(ben_VAO);
 	glDrawArrays(GL_TRIANGLES, ben_vertex_offset[cur_frame_ben], 3 * ben_n_triangles[cur_frame_ben]);
 	glBindVertexArray(0);
+
+	_model = glm::translate(glm::mat4(1.0f), ben_pos + glm::vec3(0.0f, -20.0f, 0.0f));
+	_model = glm::scale(_model, glm::vec3(30.0f, 5.0f, 30.0f));
+
+	_model = glm::rotate(_model, ben_angle, glm::vec3(0.0f, 1.0f, 0.0f));
+	_model = glm::rotate(_model, -90.0f * TO_RADIAN, glm::vec3(0.0f, -1.0f, 0.0f));
+
+
+	ModelViewMatrix = ViewMatrix[cameraIndex] * _model;
+	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
+
+	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
+	glFrontFace(GL_CW);
+
+	glUniform3f(loc_primitive_color, material_ben.diffuse_color[0], material_ben.diffuse_color[1], material_ben.diffuse_color[2]);
+	glBindVertexArray(ben_VAO);
+	glDrawArrays(GL_TRIANGLES, ben_vertex_offset[cur_frame_ben], 3 * ben_n_triangles[cur_frame_ben]);
+	glBindVertexArray(0);
+}
+
+void update_ben_motion(int timestamp_scene) {
+	ben_angle = (timestamp_scene % 360) * TO_RADIAN;
+
 }
 
 void cleanup_OpenGL_stuffs(void) {
@@ -762,4 +816,40 @@ void draw_two_hier_obj(Object *obj_ptr1, Object *obj_ptr2, int obj1_instance_ID,
 
 	//ModelViewMatrix = ViewMatrix[cameraIndex] * obj_ptr->ModelMatrix[instance_ID];
 	//ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
+}
+
+void update_chair_motion(int timestamp_scene ) {
+	float t = (timestamp_scene%360) * TO_RADIAN;
+	glm::vec3 _pos = glm::vec3(16.0f * sinf(t) * sinf(t) * sinf(t), 0.0f, 13 * cosf(t) - 5 * cosf(2 * t) - 2 * cosf(3 * t) - cosf(4 * t)) * 0.5f;
+
+	_pos.x += 200.0f;
+	_pos.y += 20.0f;
+	_pos.z += 10.0f;
+	static_objects[OBJ_NEW_CHAIR].pos[1] = _pos;
+
+	static_objects[OBJ_NEW_CHAIR].ModelMatrix[1] = glm::translate(glm::mat4(1.0f), static_objects[OBJ_NEW_CHAIR].pos[1]);
+	static_objects[OBJ_NEW_CHAIR].ModelMatrix[1] = glm::scale(static_objects[OBJ_NEW_CHAIR].ModelMatrix[1],
+		glm::vec3(0.8f, 0.8f, 0.8f));
+	static_objects[OBJ_NEW_CHAIR].ModelMatrix[1] = glm::rotate(static_objects[OBJ_NEW_CHAIR].ModelMatrix[1], 
+		180.0f*TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+
+	//pos.y += 200.0f;
+}
+
+void update_table_motion(int timestamp_scene) {
+	float t = (timestamp_scene % 360) * TO_RADIAN;
+	glm::vec3 _pos = glm::vec3(0.0f, 0.0f, sinf(t)) * 3.0f;
+
+	//_pos.x += 200.0f;
+	_pos.z += 10.0f;
+	//_pos.z += 10.0f;
+	static_objects[OBJ_TABLE].pos[3] = _pos;
+
+	static_objects[OBJ_TABLE].ModelMatrix[3] = glm::translate(glm::mat4(1.0f), static_objects[OBJ_TABLE].pos[3]+glm::vec3(50.0f, 130.0f, 5.0f));
+	static_objects[OBJ_TABLE].ModelMatrix[3] = glm::rotate(static_objects[OBJ_TABLE].ModelMatrix[3], t,
+		glm::vec3(0.0f, 1.0f, 0.0f));
+	static_objects[OBJ_TABLE].ModelMatrix[3] = glm::translate(static_objects[OBJ_TABLE].ModelMatrix[3], -static_objects[OBJ_TABLE].pos[3]);
+	static_objects[OBJ_TABLE].ModelMatrix[3] = glm::scale(static_objects[OBJ_TABLE].ModelMatrix[3],
+		glm::vec3(0.4f, 0.3f, 0.3f));
+	
 }

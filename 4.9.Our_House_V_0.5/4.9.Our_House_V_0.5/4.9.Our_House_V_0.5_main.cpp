@@ -26,8 +26,10 @@ enum _CAMERA_INFO {
 	CAMERA_PERSPECTIVE1,
 	CAMERA_PERSPECTIVE2,
 	CAMERA_PERSPECTIVE3,
+	CAMERA_PERSPECTIVE4,
 	NUMBER_OF_CAMERAS
 };
+//int camera_type = CAMERA_MAIN;
 
 #define BUFFER_OFFSET(offset) ((GLvoid *) (offset))
 
@@ -118,7 +120,7 @@ void display(void) {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	 
-	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
+	for (int i = 0; i < NUMBER_OF_CAMERAS-1; i++) {
 		if (orthoOrPerspective == false) {
 			if (i == 4 || i == 5 || i == 6)
 				continue;
@@ -141,6 +143,7 @@ void display(void) {
 
 		draw_static_object(&(static_objects[OBJ_TABLE]), 0, i);
 		draw_static_object(&(static_objects[OBJ_TABLE]), 1, i);
+		draw_static_object(&(static_objects[OBJ_TABLE]), 3, i);
 
 		draw_static_object(&(static_objects[OBJ_LIGHT]), 0, i);
 		draw_static_object(&(static_objects[OBJ_LIGHT]), 1, i);
@@ -153,6 +156,7 @@ void display(void) {
 		draw_static_object(&(static_objects[OBJ_TEAPOT]), 0, i);
 		//draw_static_object(&(static_objects[OBJ_TEAPOT]), 1, i);
 		draw_static_object(&(static_objects[OBJ_NEW_CHAIR]), 0, i);
+		draw_static_object(&(static_objects[OBJ_NEW_CHAIR]), 1, i);
 		draw_static_object(&(static_objects[OBJ_FRAME]), 0, i);
 		draw_static_object(&(static_objects[OBJ_NEW_PICTURE]), 0, i);
 		draw_static_object(&(static_objects[OBJ_COW]), 1, i);
@@ -229,36 +233,37 @@ void keyboard(unsigned char key, int x, int y) {
 		break;*/
 
 	case 'w':
-		obj.move(idx, glm::vec3(0.0f, -1.0f, 0.0f));
-		//ben_pos += glm::vec3(0.0f, -1.0f, 0.0f);
+		//obj.move(idx, glm::vec3(0.0f, -1.0f, 0.0f));
+		ben_pos += glm::vec3(0.0f, -1.0f, 0.0f);
 		//cam.move(glm::vec3(0.0f, -1.0f, 0.0f));
 		break;
 	case 'a':
-		obj.move(idx, glm::vec3(0.0f, 1.0f, 0.0f));
-		//ben_pos += glm::vec3(0.0f, 1.0f, 0.0f);
+		//obj.move(idx, glm::vec3(0.0f, 1.0f, 0.0f));
+		ben_pos += glm::vec3(0.0f, 1.0f, 0.0f);
 		//cam.move(glm::vec3(0.0f, 1.0f, 0.0f));
 		break;
 	case 's':
-		obj.move(idx, glm::vec3(-1.0f, 0.0f, 0.0f));
-		//ben_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
+		//obj.move(idx, glm::vec3(-1.0f, 0.0f, 0.0f));
+		ben_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
 		//cam.move(glm::vec3(-1.0f, 0.0f, 0.0f));
 		break;
 	case 'd':
-		obj.move(idx, glm::vec3(1.0f, 0.0f, 0.0f));
-		//ben_pos += glm::vec3(1.0f, 0.0f, 0.0f);
+		//obj.move(idx, glm::vec3(1.0f, 0.0f, 0.0f));
+		ben_pos += glm::vec3(1.0f, 0.0f, 0.0f);
 		//cam.move(glm::vec3(1.0f, 0.0f, 0.0f));
 		break;
 	case 'r':
 		//obj.move(1, glm::vec3(0.0f, 0.0f, -1.0f));
-		//ben_pos += glm::vec3(0.0f, 0.0f, -1.0f);
+		ben_pos += glm::vec3(0.0f, 0.0f, -1.0f);
 		//cam.move(glm::vec3(0.0f, 0.0f, -1.0f));
 		break;
 	case 'e':
 		//obj.move(1, glm::vec3(0.0f, 0.0f, 1.0f));
-		//ben_pos += glm::vec3(0.0f, 0.0f, 1.0f);
+		ben_pos += glm::vec3(0.0f, 0.0f, 1.0f);
 		//cam.move(glm::vec3(0.0f, 0.0f, 1.0f));
 		break;
 
+	/// MARK - CCTV and blueprint CONTROL
 	case 'o':
 		showViewingVolume = !showViewingVolume;
 		for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
@@ -274,6 +279,7 @@ void keyboard(unsigned char key, int x, int y) {
 			camera[CAMERA_PERSPECTIVE1].isViewingVolumeVisible = showViewingVolume;
 			camera[CAMERA_PERSPECTIVE2].isViewingVolumeVisible = showViewingVolume;
 			camera[CAMERA_PERSPECTIVE3].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_PERSPECTIVE4].isViewingVolumeVisible = showViewingVolume;
 		}
 		break;
 
@@ -293,15 +299,77 @@ void keyboard(unsigned char key, int x, int y) {
 			camera[CAMERA_PERSPECTIVE1].isViewingVolumeVisible = showViewingVolume;
 			camera[CAMERA_PERSPECTIVE2].isViewingVolumeVisible = showViewingVolume;
 			camera[CAMERA_PERSPECTIVE3].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_PERSPECTIVE4].isViewingVolumeVisible = showViewingVolume;
 		}
+		break;
+	///*-----------------------------------------------------------------------------------------------------*///
+
+	/// MARK - dynamic CCTV CONTROL
+	case 'i':
+		camera[CAMERA_PERSPECTIVE4].far_clip += 100.0f;
+		if (camera[CAMERA_PERSPECTIVE4].far_clip > 1000.0f)
+			camera[CAMERA_PERSPECTIVE4].far_clip = 1000.0f;
+		if (currentCamera == CAMERA_PERSPECTIVE4) {
+			ProjectionMatrix[0] = glm::perspective(camera[CAMERA_PERSPECTIVE4].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE4].aspect_ratio, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip);
+		}
+		camera[CAMERA_PERSPECTIVE4].viewingVolume.update_line(camera[CAMERA_PERSPECTIVE4].fov_y, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip, camera[CAMERA_PERSPECTIVE4].aspect_ratio);
+		break;
+	case 'k':
+		camera[CAMERA_PERSPECTIVE4].far_clip -= 100.0f;
+		if (camera[CAMERA_PERSPECTIVE4].far_clip <= camera[CAMERA_PERSPECTIVE4].near_clip)
+			camera[CAMERA_PERSPECTIVE4].far_clip = camera[CAMERA_PERSPECTIVE4].near_clip + 100.0f;
+		if (currentCamera == CAMERA_PERSPECTIVE4) {
+			ProjectionMatrix[0] = glm::perspective(camera[CAMERA_PERSPECTIVE4].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE4].aspect_ratio, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip);
+		}
+		camera[CAMERA_PERSPECTIVE4].viewingVolume.update_line(camera[CAMERA_PERSPECTIVE4].fov_y, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip, camera[CAMERA_PERSPECTIVE4].aspect_ratio);
+		break;
+	case 'j':
+		camera[CAMERA_PERSPECTIVE4].near_clip += 100.0f;
+		if (camera[CAMERA_PERSPECTIVE4].near_clip >= camera[CAMERA_PERSPECTIVE4].far_clip)
+			camera[CAMERA_PERSPECTIVE4].near_clip = camera[CAMERA_PERSPECTIVE4].far_clip-100.0f;
+		if (currentCamera == CAMERA_PERSPECTIVE4) {
+			ProjectionMatrix[0] = glm::perspective(camera[CAMERA_PERSPECTIVE4].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE4].aspect_ratio, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip);
+		}
+		camera[CAMERA_PERSPECTIVE4].viewingVolume.update_line(camera[CAMERA_PERSPECTIVE4].fov_y, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip, camera[CAMERA_PERSPECTIVE4].aspect_ratio);
+		break;
+	case 'l':
+		camera[CAMERA_PERSPECTIVE4].near_clip -= 100.0f;
+		if (camera[CAMERA_PERSPECTIVE4].near_clip < 0.0f)
+			camera[CAMERA_PERSPECTIVE4].near_clip = 1.0f;
+		if (currentCamera == CAMERA_PERSPECTIVE4) {
+			ProjectionMatrix[0] = glm::perspective(camera[CAMERA_PERSPECTIVE4].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE4].aspect_ratio, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip);
+		}
+		camera[CAMERA_PERSPECTIVE4].viewingVolume.update_line(camera[CAMERA_PERSPECTIVE4].fov_y, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip, camera[CAMERA_PERSPECTIVE4].aspect_ratio);
+		break;
+	///*-----------------------------------------------------------------------------------------------------*///
+
+	case '1':
+		//camera_type = CAMERA_MAIN;
+		currentCamera = CAMERA_MAIN;
+		set_ViewMatrix_from_camera_frame(ViewMatrix[CAMERA_MAIN], camera[CAMERA_MAIN]);
+		ProjectionMatrix[0] = glm::perspective(camera[CAMERA_MAIN].fov_y*TO_RADIAN, camera[CAMERA_MAIN].aspect_ratio, camera[CAMERA_MAIN].near_clip, camera[CAMERA_MAIN].far_clip);
+
+		camera[CAMERA_MAIN].rotateDirection = 0;
+
+		break;
+	case '2':
+		currentCamera = CAMERA_PERSPECTIVE4;
+		set_ViewMatrix_from_camera_frame(ViewMatrix[CAMERA_MAIN], camera[CAMERA_PERSPECTIVE4]);
+		ProjectionMatrix[0] = glm::perspective(camera[CAMERA_PERSPECTIVE4].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE4].aspect_ratio, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip);
+
+		camera[CAMERA_PERSPECTIVE4].rotateDirection = 0;
+
 		break;
 
 	case 'q':
-		camera[currentCamera].rotateDirection = (camera[currentCamera].rotateDirection + 1) % 3;
-		
+		if(currentCamera == CAMERA_MAIN)
+			camera[currentCamera].rotateDirection = (camera[currentCamera].rotateDirection + 1) % 3;
+		else
+			camera[currentCamera].rotateDirection = (camera[currentCamera].rotateDirection + 1) % 2;
+
 		break;
 	}
-	printf("%f %f %f\n", obj.pos[idx].x, obj.pos[idx].y, obj.pos[idx].z);
+	printf("%f %f %f\n", ben_pos.x, ben_pos.y, ben_pos.z);
 }
 
 void keySpecial(int key, int x, int y) {
@@ -399,6 +467,9 @@ void reshape(int width, int height) {
 
 	viewport[6].x = (int)(0.60f*width); viewport[6].y = (int)(0.70f*height);
 	viewport[6].w = (int)(0.40f*width); viewport[6].h = (int)(0.30f*height);
+
+	viewport[7].x = viewport[7].y = 0;
+	viewport[7].w = (int)(0.60f*width); viewport[7].h = (int)(height);
 	
 	//camera[0].aspect_ratio = (float)width / height;
 	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
@@ -440,6 +511,8 @@ void reshape(int width, int height) {
 
 	ProjectionMatrix[6] = glm::perspective(camera[CAMERA_PERSPECTIVE3].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE3].aspect_ratio, camera[CAMERA_PERSPECTIVE3].near_clip, camera[CAMERA_PERSPECTIVE3].far_clip);
 
+	ProjectionMatrix[7] = glm::perspective(camera[CAMERA_PERSPECTIVE4].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE4].aspect_ratio, camera[CAMERA_PERSPECTIVE4].near_clip, camera[CAMERA_PERSPECTIVE4].far_clip);
+
 	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) 
 		camera[i].viewingVolume.update_line(camera[i].fov_y, camera[i].near_clip, camera[i].far_clip, camera[i].aspect_ratio);
 	
@@ -447,11 +520,8 @@ void reshape(int width, int height) {
 }
 
 void timer_scene(int timestamp_scene) {
-
 	//float addColor1 = ((rand() % 255) - (rand() % 255)) / 255.0f;
-	float addColor1 = sin(((timestamp_scene*10)%180)*TO_RADIAN);
-	float addColor2 = sin(((timestamp_scene*14+45)%180)*TO_RADIAN);
-	float addColor3 = sin(((timestamp_scene*17+90)%180)*TO_RADIAN);
+	static bool cameraBlink = false;
 	static int spider_move_count = 0;
 	//printf("%f\n", addColor1);
 
@@ -496,13 +566,10 @@ void timer_scene(int timestamp_scene) {
 	static_objects[OBJ_LIGHT].material[6].diffuse.b = 0.02540f * addColor3;*/
 	//printf("%f\n", static_objects[OBJ_TEAPOT].rotationAngle[1]);
 
-	glutPostRedisplay();
-	glutTimerFunc(100, timer_scene, (timestamp_scene + 1) % INT_MAX);
-}
-
-void timer_scene2(int timestamp_scene) {
-	static bool cameraBlink = false;
 	
+
+	
+
 	if (orthoOrPerspective == false) {
 		if (cameraBlink == false) {
 			cameraBlink = true;
@@ -531,12 +598,26 @@ void timer_scene2(int timestamp_scene) {
 			dotColor[orthoOrPerspective][2] = 255.0f;
 		}
 	}
-	
-	
 
 	glutPostRedisplay();
-	glutTimerFunc(100, timer_scene2, 0);
+	glutTimerFunc(100, timer_scene, (timestamp_scene + 1) % INT_MAX);
 }
+
+void timer_scene2(int timestamp_scene) {
+	update_chair_motion(timestamp_scene);
+	update_table_motion(timestamp_scene);
+
+	glutPostRedisplay();
+	glutTimerFunc(10, timer_scene2, (timestamp_scene + 1) % INT_MAX);
+}
+
+void timer_scene3(int timestamp_scene) {
+	update_ben_motion(timestamp_scene);
+
+	glutPostRedisplay();
+	glutTimerFunc(1, timer_scene3, (timestamp_scene + 15) % INT_MAX);
+}
+
 
 
 
@@ -556,17 +637,17 @@ void mousepress(int button, int state, int x, int y) {
 
 void mousewheel(int button, int dir, int x, int y) {
 	if (dir > 0) {
-		printf("wheel up\n");
+		//printf("wheel up\n");
 		camera[currentCamera].fov_y -= 1.0f;
 		if (camera[currentCamera].fov_y < 0.0f)
 			camera[currentCamera].fov_y = 0.0f;
 	}
 	else {
-		printf("wheel down\n");
+		//printf("wheel down\n");
 		camera[currentCamera].fov_y += 1.0f;
 	}
 
-	ProjectionMatrix[currentCamera] = glm::perspective(camera[currentCamera].fov_y*TO_RADIAN, camera[currentCamera].aspect_ratio, camera[currentCamera].near_clip, camera[currentCamera].far_clip);
+	ProjectionMatrix[0] = glm::perspective(camera[currentCamera].fov_y*TO_RADIAN, camera[currentCamera].aspect_ratio, camera[currentCamera].near_clip, camera[currentCamera].far_clip);
 }
 
 void motion(int x, int y) {
@@ -581,8 +662,10 @@ void motion(int x, int y) {
 
 	switch (modifer_status) { // you may define the key combinations yourself.
 	case GLUT_ACTIVE_SHIFT:
-		renew_cam_position_along_axis(camera[currentCamera], dely, camera[currentCamera].vaxis);
-		renew_cam_position_along_axis(camera[currentCamera], delx, camera[currentCamera].uaxis);
+		if (currentCamera == CAMERA_MAIN) {
+			renew_cam_position_along_axis(camera[currentCamera], dely, camera[currentCamera].vaxis);
+			renew_cam_position_along_axis(camera[currentCamera], delx, camera[currentCamera].uaxis);
+		}
 		//printf("motion1\n");
 		break;
 	/*case GLUT_ACTIVE_SHIFT | GLUT_ACTIVE_CTRL:
@@ -590,17 +673,28 @@ void motion(int x, int y) {
 		printf("motion2\n");
 		break;*/
 	default:
-		renew_cam_position_along_axis(camera[currentCamera], dely, -camera[currentCamera].naxis);
-		if(camera[currentCamera].rotateDirection == 0)
-			renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, -camera[currentCamera].vaxis);
-		if (camera[currentCamera].rotateDirection == 1)
-			renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, camera[currentCamera].naxis);
-		if (camera[currentCamera].rotateDirection == 2)
-			renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, -camera[currentCamera].uaxis);
+		if (currentCamera == CAMERA_MAIN) {
+			renew_cam_position_along_axis(camera[currentCamera], dely, -camera[currentCamera].naxis);
+			if (camera[currentCamera].rotateDirection == 0)
+				renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, -camera[currentCamera].vaxis);
+			if (camera[currentCamera].rotateDirection == 1)
+				renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, camera[currentCamera].naxis);
+			if (camera[currentCamera].rotateDirection == 2)
+				renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, -camera[currentCamera].uaxis);
+		}
+		else {
+			
+			if (camera[currentCamera].rotateDirection == 1)
+				renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, camera[currentCamera].naxis);
+			else {
+				renew_cam_orientation_rotation_around_axis(camera[currentCamera], delx, -camera[currentCamera].vaxis);
+				renew_cam_orientation_rotation_around_axis(camera[currentCamera], -dely, -camera[currentCamera].uaxis);
+			}
+		}
 		//printf("motion3\n");
 		break;
 	}
-	set_ViewMatrix_from_camera_frame(ViewMatrix[currentCamera], camera[currentCamera]);
+	set_ViewMatrix_from_camera_frame(ViewMatrix[0], camera[currentCamera]);
 	
 	//ViewMatrix = glm::lookAt(camera.pos, camera.center, camera.vaxis);
 	//ViewProjectionMatrix = ProjectionMatrix * ViewMatrix;
@@ -670,7 +764,8 @@ void register_callbacks(void) {
 	glutMotionFunc(motion);
 	glutReshapeFunc(reshape);
 	glutTimerFunc(100, timer_scene, 0);
-	glutTimerFunc(100, timer_scene2, 0);
+	glutTimerFunc(10, timer_scene2, 0);
+	glutTimerFunc(1, timer_scene3, 0);
 	glutCloseFunc(cleanup);
 }
 

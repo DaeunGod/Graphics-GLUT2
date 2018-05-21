@@ -17,12 +17,22 @@ GLint loc_ModelViewProjectionMatrix, loc_primitive_color; // indices of uniform 
 #define CAM_TRANSLATION_SPEED 0.25f
 #define CAM_ROTATION_SPEED 0.1f
 
-#define NUMBER_OF_CAMERAS 4
+//#define NUMBER_OF_CAMERAS 4
+enum _CAMERA_INFO {
+	CAMERA_MAIN,
+	CAMERA_ORTHO1,
+	CAMERA_ORTHO2,
+	CAMERA_ORTHO3,
+	CAMERA_PERSPECTIVE1,
+	CAMERA_PERSPECTIVE2,
+	CAMERA_PERSPECTIVE3,
+	NUMBER_OF_CAMERAS
+};
 
 #define BUFFER_OFFSET(offset) ((GLvoid *) (offset))
 
 #define LOC_VERTEX 0
-
+#define WC_AXIS_LENGTH		60.0f
 
 
 
@@ -30,9 +40,13 @@ GLint loc_ModelViewProjectionMatrix, loc_primitive_color; // indices of uniform 
 glm::mat4 ModelViewProjectionMatrix;
 glm::mat4 ModelViewMatrix, ViewMatrix[NUMBER_OF_CAMERAS], ProjectionMatrix[NUMBER_OF_CAMERAS];
 
-#include "Camera.h"
+glm::mat4 ModelMatrix_CAR_BODY, ModelMatrix_CAR_WHEEL, ModelMatrix_CAR_NUT, ModelMatrix_CAR_DRIVER;
+glm::mat4 ModelMatrix_CAR_BODY_to_DRIVER; // computed only once in initialize_camera()
+
+
 #include "Geometry.h"
 #include "Object_Definitions.h"
+#include "Camera.h"
 #include "Car.h"
 
 typedef struct _VIEWPORT {
@@ -46,6 +60,8 @@ typedef struct _CALLBACK_CONTEXT {
 	float rotation_angle_cow;
 } CALLBACK_CONTEXT;
 CALLBACK_CONTEXT cc;
+
+bool orthoOrPerspective = false;
 
 
 bool keyState[108] = { 0 };
@@ -86,6 +102,15 @@ void renew_cam_orientation_rotation_around_axis (CAMERA &_camera, float angle, g
 	_camera.vaxis = RotationMatrix * _camera.vaxis;
 	_camera.naxis = RotationMatrix * _camera.naxis;
 }
+void camera_rotation_around_axis(CAMERA &_camera, float angle, glm::vec3 rot_axis) {
+	glm::mat3 RotationMatrix;
+
+	RotationMatrix = glm::mat3(glm::rotate(glm::mat4(1.0f), TO_RADIAN*angle, rot_axis));
+
+	_camera.uaxis = RotationMatrix * _camera.uaxis;
+	_camera.vaxis = RotationMatrix * _camera.vaxis;
+	_camera.naxis = RotationMatrix * _camera.naxis;
+}
 
 void display(void) {
 	keySpecialOperation();
@@ -93,8 +118,18 @@ void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	 
 	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
+		if (orthoOrPerspective == false) {
+			if (i == 4 || i == 5 || i == 6)
+				continue;
+		}
+		else {
+			if (i == 1 || i == 2 || i == 3)
+				continue;
+		}
 		glViewport(viewport[i].x, viewport[i].y, 
 			viewport[i].w, viewport[i].h);
+
+		
 
 		glLineWidth(2.0f);
 		draw_axes(ViewMatrix[i], i);
@@ -120,6 +155,12 @@ void display(void) {
 		draw_static_object(&(static_objects[OBJ_COW1]), 0, i);
 		draw_static_object(&(static_objects[OBJ_COW2]), 0, i);
 
+		draw_car_dummy(i);
+
+		
+		draw_spider(i);
+		draw_ben(i);
+
 		draw_animated_tiger(i);
 	}
 
@@ -128,7 +169,7 @@ void display(void) {
 
 void keyboard(unsigned char key, int x, int y) {
 	static int flag_cull_face = 0, polygon_fill_on = 0, depth_test_on = 0;
-
+	CAMERA& cam = camera[CAMERA_PERSPECTIVE1];
 	switch (key) {
 	case 27: // ESC key
 		glutLeaveMainLoop(); // Incur destuction callback for cleanups.
@@ -167,7 +208,7 @@ void keyboard(unsigned char key, int x, int y) {
 		}
 		glutPostRedisplay();
 		break;
-	case 'd':
+	/*case 'd':
 		depth_test_on = 1 - depth_test_on;
 		if (depth_test_on) {
 			glEnable(GL_DEPTH_TEST);
@@ -178,14 +219,43 @@ void keyboard(unsigned char key, int x, int y) {
 			fprintf(stdout, "^^^ Depth test disabled.\n");
 		}
 		glutPostRedisplay();
+		break;*/
+
+	case 'w':
+		ben_pos += glm::vec3(0.0f, -1.0f, 0.0f);
+		//cam.move(glm::vec3(0.0f, -1.0f, 0.0f));
+		break;
+	case 'a':
+		ben_pos += glm::vec3(0.0f, 1.0f, 0.0f);
+		//cam.move(glm::vec3(0.0f, 1.0f, 0.0f));
+		break;
+	case 's':
+		ben_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
+		//cam.move(glm::vec3(-1.0f, 0.0f, 0.0f));
+		break;
+	case 'd':
+		ben_pos += glm::vec3(1.0f, 0.0f, 0.0f);
+		//cam.move(glm::vec3(1.0f, 0.0f, 0.0f));
+		break;
+	case 'r':
+		ben_pos += glm::vec3(0.0f, 0.0f, -1.0f);
+		//cam.move(glm::vec3(0.0f, 0.0f, -1.0f));
+		break;
+	case 'e':
+		ben_pos += glm::vec3(0.0f, 0.0f, 1.0f);
+		//cam.move(glm::vec3(0.0f, 0.0f, 1.0f));
 		break;
 
+	case 'p':
+		orthoOrPerspective = !orthoOrPerspective;
+		break;
 
 	case 'q':
 		camera[currentCamera].rotateDirection = (camera[currentCamera].rotateDirection + 1) % 3;
 		
 		break;
 	}
+	printf("%f %f %f\n", ben_pos.x, ben_pos.y, ben_pos.z);
 }
 
 void keySpecial(int key, int x, int y) {
@@ -273,21 +343,85 @@ void reshape(int width, int height) {
 
 	viewport[3].x = (int)(0.60f*width); viewport[3].y = (int)(0.70f*height);
 	viewport[3].w = (int)(0.40f*width); viewport[3].h = (int)(0.30f*height);
+
+	viewport[4].x = (int)(0.60f*width); viewport[4].y = 0;
+	viewport[4].w = (int)(0.40f*width); viewport[4].h = (int)(0.40f*height);
+
+	viewport[5].x = (int)(0.60f*width); viewport[5].y = (int)(0.40f*height);
+	viewport[5].w = (int)(0.40f*width); viewport[5].h = (int)(0.30f*height);
+
+	viewport[6].x = (int)(0.60f*width); viewport[6].y = (int)(0.70f*height);
+	viewport[6].w = (int)(0.40f*width); viewport[6].h = (int)(0.30f*height);
 	
 	//camera[0].aspect_ratio = (float)width / height;
 	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
 		camera[i].aspect_ratio = (float)viewport[i].w / viewport[i].h;
-		ProjectionMatrix[i] = glm::perspective(camera[i].fov_y*TO_RADIAN, camera[i].aspect_ratio, camera[i].near_clip, camera[i].far_clip);
-		camera[i].viewingVolume.update_line(camera[i].fov_y, camera[i].near_clip, camera[i].far_clip, camera[i].aspect_ratio);
-		printf("camerai : %d %d %f\n", viewport[i].w, viewport[i].h, camera[i].aspect_ratio);
+		/*ProjectionMatrix[i] = glm::perspective(camera[i].fov_y*TO_RADIAN, camera[i].aspect_ratio, camera[i].near_clip, camera[i].far_clip);
+		if (i == 1)
+			ProjectionMatrix[i] = glm::ortho(-(float)viewport[i].w*0.15f, (float)viewport[i].w*0.15f, -(float)viewport[i].h*0.1f, (float)viewport[i].h*0.1f,
+				camera[i].near_clip, camera[i].far_clip);
+		if (i == 2)
+			ProjectionMatrix[i] = glm::ortho(-(float)viewport[i].w*0.2f, (float)viewport[i].w*0.2f, -(float)viewport[i].h*0.3f, (float)viewport[i].h*0.3f, 
+				camera[i].near_clip, camera[i].far_clip);
+		if (i == 3)
+			ProjectionMatrix[i] = glm::ortho(-(float)viewport[i].w*0.2f, (float)viewport[i].w*0.2f, -(float)viewport[i].h*0.1f, (float)viewport[i].h*0.1f,
+				camera[i].near_clip, camera[i].far_clip);*/
+		
+		//camera[i].viewingVolume.update_line(camera[i].fov_y, camera[i].near_clip, camera[i].far_clip, camera[i].aspect_ratio);
+		//printf("camerai : %d %d %f\n", viewport[i].w, viewport[i].h, camera[i].aspect_ratio);
 	}
+	ProjectionMatrix[0] = glm::perspective(camera[CAMERA_MAIN].fov_y*TO_RADIAN, camera[CAMERA_MAIN].aspect_ratio, camera[CAMERA_MAIN].near_clip, camera[CAMERA_MAIN].far_clip);
+	
+	ProjectionMatrix[1] = glm::ortho(-(float)viewport[CAMERA_ORTHO1].w*0.15f, (float)viewport[CAMERA_ORTHO1].w*0.15f, -(float)viewport[CAMERA_ORTHO1].h*0.1f, (float)viewport[CAMERA_ORTHO1].h*0.1f,
+		camera[CAMERA_ORTHO1].near_clip, camera[CAMERA_ORTHO1].far_clip);
+	camera[CAMERA_ORTHO1].viewingVolume.viewingVolumeWidth = viewport[CAMERA_ORTHO1].w*0.15f;
+	camera[CAMERA_ORTHO1].viewingVolume.viewingVolumeHeight = viewport[CAMERA_ORTHO1].h*0.1f;
+	
+	ProjectionMatrix[2] = glm::ortho(-(float)viewport[CAMERA_ORTHO2].w*0.2f, (float)viewport[CAMERA_ORTHO2].w*0.2f, -(float)viewport[CAMERA_ORTHO2].h*0.3f, (float)viewport[CAMERA_ORTHO2].h*0.3f,
+		camera[CAMERA_ORTHO2].near_clip, camera[CAMERA_ORTHO2].far_clip);
+	camera[CAMERA_ORTHO2].viewingVolume.viewingVolumeWidth = viewport[CAMERA_ORTHO1].w*0.2f;
+	camera[CAMERA_ORTHO2].viewingVolume.viewingVolumeHeight = viewport[CAMERA_ORTHO1].h*0.3f;
+	
+	ProjectionMatrix[3] = glm::ortho(-(float)viewport[CAMERA_ORTHO3].w*0.2f, (float)viewport[CAMERA_ORTHO3].w*0.2f, -(float)viewport[CAMERA_ORTHO3].h*0.1f, (float)viewport[CAMERA_ORTHO3].h*0.1f,
+		camera[CAMERA_ORTHO3].near_clip, camera[CAMERA_ORTHO3].far_clip);
+	camera[CAMERA_ORTHO3].viewingVolume.viewingVolumeWidth = viewport[CAMERA_ORTHO1].w*0.2f;
+	camera[CAMERA_ORTHO3].viewingVolume.viewingVolumeHeight = viewport[CAMERA_ORTHO1].h*0.1f;
 
+	ProjectionMatrix[4] = glm::perspective(camera[CAMERA_PERSPECTIVE1].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE1].aspect_ratio, camera[CAMERA_PERSPECTIVE1].near_clip, camera[CAMERA_PERSPECTIVE1].far_clip);
+
+	ProjectionMatrix[5] = glm::perspective(camera[CAMERA_PERSPECTIVE2].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE2].aspect_ratio, camera[CAMERA_PERSPECTIVE2].near_clip, camera[CAMERA_PERSPECTIVE2].far_clip);
+
+	ProjectionMatrix[6] = glm::perspective(camera[CAMERA_PERSPECTIVE3].fov_y*TO_RADIAN, camera[CAMERA_PERSPECTIVE3].aspect_ratio, camera[CAMERA_PERSPECTIVE3].near_clip, camera[CAMERA_PERSPECTIVE3].far_clip);
+
+	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) 
+		camera[i].viewingVolume.update_line(camera[i].fov_y, camera[i].near_clip, camera[i].far_clip, camera[i].aspect_ratio);
+	
 	glutPostRedisplay();
 }
 
 void timer_scene(int timestamp_scene) {
 	tiger_data.cur_frame = timestamp_scene % N_TIGER_FRAMES;
+	if (cur_dir_spider) {
+		cur_frame_spider--;
+		if (cur_frame_spider < 0) {
+			cur_frame_spider = 0;
+			cur_dir_spider = false;
+		}
+		spider_pos += glm::vec3(0.0, 0.0, 0.1f);
+	}
+	else {
+		cur_frame_spider++;
+		if (cur_frame_spider > N_SPIDER_FRAMES - 1) {
+			cur_frame_spider = N_SPIDER_FRAMES - 1;
+			cur_dir_spider = true;
+			//cur_frame_spider = 0;
+		}
+		spider_pos += glm::vec3(0.0, 0.0, -0.1f);
+	}
+	//cur_frame_spider = timestamp_scene % N_SPIDER_FRAMES;
 	tiger_data.rotation_angle = (timestamp_scene % 360)*TO_RADIAN;
+	rotation_angle_car = ((timestamp_scene) % 360)*TO_RADIAN;
+
 	glutPostRedisplay();
 	glutTimerFunc(100, timer_scene, (timestamp_scene + 1) % INT_MAX);
 }
@@ -395,9 +529,14 @@ void prepare_scene(void) {
 	define_static_objects();
 	define_animated_tiger();
 
+	ModelMatrix_CAR_BODY = ModelMatrix_CAR_WHEEL = ModelMatrix_CAR_NUT = glm::mat4(1.0f);
+
 	prepare_geom_obj(GEOM_OBJ_ID_CAR_BODY, "Data/car_body_triangles_v.txt", GEOM_OBJ_TYPE_V);
 	prepare_geom_obj(GEOM_OBJ_ID_CAR_WHEEL, "Data/car_wheel_triangles_v.txt", GEOM_OBJ_TYPE_V);
 	prepare_geom_obj(GEOM_OBJ_ID_CAR_NUT, "Data/car_nut_triangles_v.txt", GEOM_OBJ_TYPE_V);
+
+	prepare_spider();
+	prepare_ben();
 }
 
 void cleanup(void) {
@@ -470,7 +609,7 @@ int main(int argc, char *argv[]) {
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
-	glutInitWindowSize(1200, 800);
+	glutInitWindowSize(1680, 1050);
 	glutInitContextVersion(4, 0);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 	glutCreateWindow(program_name);

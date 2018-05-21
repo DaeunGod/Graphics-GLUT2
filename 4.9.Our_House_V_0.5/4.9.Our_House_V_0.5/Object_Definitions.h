@@ -42,20 +42,66 @@ typedef struct _Object {
 	}
 } Object;
 
-#define N_MAX_STATIC_OBJECTS		10
+//#define N_MAX_STATIC_OBJECTS		10
+//Object static_objects[N_MAX_STATIC_OBJECTS]; // allocage memory dynamically every time it is needed rather than using a static array
+//int n_static_objects = 0;
+
+//#define OBJ_BUILDING		0
+//#define OBJ_TABLE			1
+//#define OBJ_LIGHT			2
+//#define OBJ_TEAPOT			3
+//#define OBJ_NEW_CHAIR		4
+//#define OBJ_FRAME			5
+//#define OBJ_NEW_PICTURE		6
+//#define OBJ_COW				7
+//#define OBJ_COW1			8
+//#define OBJ_COW2			9
+enum STATIC_OBJS {
+	OBJ_BUILDING,	
+	OBJ_TABLE,		
+	OBJ_LIGHT,		
+	OBJ_TEAPOT,		
+	OBJ_NEW_CHAIR,	
+	OBJ_FRAME,		
+	OBJ_NEW_PICTURE,	
+	OBJ_COW,			
+	OBJ_COW1,		
+	OBJ_COW2,		
+	N_MAX_STATIC_OBJECTS
+};
+
 Object static_objects[N_MAX_STATIC_OBJECTS]; // allocage memory dynamically every time it is needed rather than using a static array
 int n_static_objects = 0;
 
-#define OBJ_BUILDING		0
-#define OBJ_TABLE			1
-#define OBJ_LIGHT			2
-#define OBJ_TEAPOT			3
-#define OBJ_NEW_CHAIR		4
-#define OBJ_FRAME			5
-#define OBJ_NEW_PICTURE		6
-#define OBJ_COW				7
-#define OBJ_COW1			8
-#define OBJ_COW2			9
+typedef struct _Material_Parameters {
+	float ambient_color[4], diffuse_color[4], specular_color[4], emissive_color[4];
+	float specular_exponent;
+} Material_Parameters;
+
+// spider object
+#define N_SPIDER_FRAMES 16
+GLuint spider_VBO, spider_VAO;
+int spider_n_triangles[N_SPIDER_FRAMES];
+int spider_vertex_offset[N_SPIDER_FRAMES];
+GLfloat *spider_vertices[N_SPIDER_FRAMES];
+int cur_frame_spider = 0;
+bool cur_dir_spider = false; //false: down side, true: up side
+
+glm::vec3 spider_pos = glm::vec3(106.0f, 79.0f, 22.0f);
+
+Material_Parameters material_spider;
+
+// ben object
+#define N_BEN_FRAMES 30
+GLuint ben_VBO, ben_VAO;
+int ben_n_triangles[N_BEN_FRAMES];
+int ben_vertex_offset[N_BEN_FRAMES];
+GLfloat *ben_vertices[N_BEN_FRAMES];
+int cur_frame_ben = 0;
+
+glm::vec3 ben_pos = glm::vec3(-140.0f, 74.0f, 0.0f);
+
+Material_Parameters material_ben;
 
 int read_geometry(GLfloat **object, int bytes_per_primitive, char *filename) {
 	int n_triangles;
@@ -421,13 +467,24 @@ void define_axes(void) {
 	glBindVertexArray(0);
 }
 
-#define WC_AXIS_LENGTH		60.0f
+//#define WC_AXIS_LENGTH		60.0f
 void draw_axes(glm::mat4 obj, int cameraIndex) {
 	//ModelViewMatrix = glm::scale(ViewMatrix[cameraIndex], glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
 	ModelViewMatrix = glm::scale(obj, glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
 	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
 	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
 
+	glBindVertexArray(VAO_axes);
+	glUniform3fv(loc_primitive_color, 1, axes_color[0]);
+	glDrawArrays(GL_LINES, 0, 2);
+	glUniform3fv(loc_primitive_color, 1, axes_color[1]);
+	glDrawArrays(GL_LINES, 2, 2);
+	glUniform3fv(loc_primitive_color, 1, axes_color[2]);
+	glDrawArrays(GL_LINES, 4, 2);
+	glBindVertexArray(0);
+}
+
+void draw_axes() {
 	glBindVertexArray(VAO_axes);
 	glUniform3fv(loc_primitive_color, 1, axes_color[0]);
 	glDrawArrays(GL_LINES, 0, 2);
@@ -485,57 +542,151 @@ void draw_animated_tiger(int cameraIndex) {
 	draw_axes(ViewMatrix[cameraIndex], cameraIndex);
 }
 
-void draw_camera_axex(int index) {
-	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
-		if (i == index)
-			continue;
+void prepare_spider(void) {
+	int i, n_bytes_per_vertex, n_bytes_per_triangle, spider_n_total_triangles = 0;
+	char filename[512];
 
-		glm::mat4 obj = glm::translate(glm::mat4(1), camera[i].pos);
-		glm::mat4 rot = glm::mat4(1);
+	n_bytes_per_vertex = 8 * sizeof(float); // 3 for vertex, 3 for normal, and 2 for texcoord
+	n_bytes_per_triangle = 3 * n_bytes_per_vertex;
 
-		if ( camera[i].isViewingVolumeVisible ) {
-			/*rot[0][0] = camera[i].uaxis.x; rot[1][0] = camera[i].uaxis.y; rot[2][0] = camera[i].uaxis.z;
-			rot[0][1] = camera[i].vaxis.x; rot[1][1] = camera[i].vaxis.y; rot[2][1] = camera[i].vaxis.z;
-			rot[0][2] = camera[i].naxis.x; rot[1][2] = camera[i].naxis.y; rot[2][2] = camera[i].naxis.z;*/
-			rot[0][0] = camera[i].uaxis.x; rot[1][0] = camera[i].vaxis.x; rot[2][0] = camera[i].naxis.x;
-			rot[0][1] = camera[i].uaxis.y; rot[1][1] = camera[i].vaxis.y; rot[2][1] = camera[i].naxis.y;
-			rot[0][2] = camera[i].uaxis.z; rot[1][2] = camera[i].vaxis.z; rot[2][2] = camera[i].naxis.z;
+	for (i = 0; i < N_SPIDER_FRAMES; i++) {
+		sprintf(filename, "Data/spider/spider_vnt_%d%d.geom", i / 10, i % 10);
+		spider_n_triangles[i] = read_geometry(&spider_vertices[i], n_bytes_per_triangle, filename);
+		// assume all geometry files are effective
+		spider_n_total_triangles += spider_n_triangles[i];
 
-			obj = obj * rot;
-			ModelViewMatrix = ViewMatrix[index] * obj;
-			ModelViewProjectionMatrix = ProjectionMatrix[index] * ModelViewMatrix;
-			glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
-			camera[i].viewingVolume.draw_line();
-		}
-
-		obj = glm::translate(glm::mat4(1), camera[i].pos);
-		rot[0][0] = camera[i].uaxis.x; rot[1][0] = camera[i].vaxis.x; rot[2][0] = camera[i].naxis.x;
-		rot[0][1] = camera[i].uaxis.y; rot[1][1] = camera[i].vaxis.y; rot[2][1] = camera[i].naxis.y;
-		rot[0][2] = camera[i].uaxis.z; rot[1][2] = camera[i].vaxis.z; rot[2][2] = camera[i].naxis.z;
-
-		obj = obj * rot;
-		ModelViewMatrix = ViewMatrix[index] * obj;
-		ModelViewMatrix = glm::scale(ModelViewMatrix, glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
-		ModelViewProjectionMatrix = ProjectionMatrix[index] * ModelViewMatrix;
-		glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
-
-		glBindVertexArray(VAO_axes);
-		glUniform3fv(loc_primitive_color, 1, axes_color[0]);
-		glDrawArrays(GL_LINES, 0, 2);
-		glUniform3fv(loc_primitive_color, 1, axes_color[1]);
-		glDrawArrays(GL_LINES, 2, 2);
-		glUniform3fv(loc_primitive_color, 1, axes_color[2]);
-		glDrawArrays(GL_LINES, 4, 2);
-		glBindVertexArray(0);
-
-		//if (camera[i].isViewingVolumeVisible) {
-		//	camera[i].viewingVolume.draw_line();
-		//}
+		if (i == 0)
+			spider_vertex_offset[i] = 0;
+		else
+			spider_vertex_offset[i] = spider_vertex_offset[i - 1] + 3 * spider_n_triangles[i - 1];
 	}
+
+	// initialize vertex buffer object
+	glGenBuffers(1, &spider_VBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, spider_VBO);
+	glBufferData(GL_ARRAY_BUFFER, spider_n_total_triangles*n_bytes_per_triangle, NULL, GL_STATIC_DRAW);
+
+	for (i = 0; i < N_SPIDER_FRAMES; i++)
+		glBufferSubData(GL_ARRAY_BUFFER, spider_vertex_offset[i] * n_bytes_per_vertex,
+			spider_n_triangles[i] * n_bytes_per_triangle, spider_vertices[i]);
+
+	// as the geometry data exists now in graphics memory, ...
+	for (i = 0; i < N_SPIDER_FRAMES; i++)
+		free(spider_vertices[i]);
+
+	// initialize vertex array object
+	glGenVertexArrays(1, &spider_VAO);
+	glBindVertexArray(spider_VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, spider_VBO);
+	glVertexAttribPointer(LOC_VERTEX, 3, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(LOC_NORMAL, 3, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(LOC_TEXCOORD, 2, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	material_spider.diffuse_color[0] = 153.0f / 255.0f;
+	material_spider.diffuse_color[1] = 130.0f / 255.0f;
+	material_spider.diffuse_color[2] = 255.0f / 255.0f;
+	material_spider.diffuse_color[3] = 1.0f;
+
+}
+
+void draw_spider(int cameraIndex) {
+	
+	glFrontFace(GL_CW);
+
+	ModelViewMatrix = glm::translate(ViewMatrix[cameraIndex], spider_pos);
+	ModelViewMatrix = glm::scale(ModelViewMatrix, glm::vec3(5.0f, -5.0f, -5.0f));
+	//ModelViewMatrix = glm::rotate(ModelViewMatrix, 180*TO_RADIAN, glm::vec3(0.0f, 1.0f, 0.0f));
+	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
+
+	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
+
+	glUniform3f(loc_primitive_color, material_spider.diffuse_color[0], material_spider.diffuse_color[1], material_spider.diffuse_color[2]);
+	glBindVertexArray(spider_VAO);
+	glDrawArrays(GL_TRIANGLES, spider_vertex_offset[cur_frame_spider], 3 * spider_n_triangles[cur_frame_spider]);
+	glBindVertexArray(0);
+}
+
+void prepare_ben(void) {
+	int i, n_bytes_per_vertex, n_bytes_per_triangle, ben_n_total_triangles = 0;
+	char filename[512];
+
+	n_bytes_per_vertex = 8 * sizeof(float); // 3 for vertex, 3 for normal, and 2 for texcoord
+	n_bytes_per_triangle = 3 * n_bytes_per_vertex;
+
+	for (i = 0; i < N_BEN_FRAMES; i++) {
+		sprintf(filename, "Data/ben/ben_vnt_%d%d.geom", i / 10, i % 10);
+		ben_n_triangles[i] = read_geometry(&ben_vertices[i], n_bytes_per_triangle, filename);
+		// assume all geometry files are effective
+		ben_n_total_triangles += ben_n_triangles[i];
+
+		if (i == 0)
+			ben_vertex_offset[i] = 0;
+		else
+			ben_vertex_offset[i] = ben_vertex_offset[i - 1] + 3 * ben_n_triangles[i - 1];
+	}
+
+	// initialize vertex buffer object
+	glGenBuffers(1, &ben_VBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, ben_VBO);
+	glBufferData(GL_ARRAY_BUFFER, ben_n_total_triangles*n_bytes_per_triangle, NULL, GL_STATIC_DRAW);
+
+	for (i = 0; i < N_BEN_FRAMES; i++)
+		glBufferSubData(GL_ARRAY_BUFFER, ben_vertex_offset[i] * n_bytes_per_vertex,
+			ben_n_triangles[i] * n_bytes_per_triangle, ben_vertices[i]);
+
+	// as the geometry data exists now in graphics memory, ...
+	for (i = 0; i < N_BEN_FRAMES; i++)
+		free(ben_vertices[i]);
+
+	// initialize vertex array object
+	glGenVertexArrays(1, &ben_VAO);
+	glBindVertexArray(ben_VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, ben_VBO);
+	glVertexAttribPointer(LOC_VERTEX, 3, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(LOC_NORMAL, 3, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(LOC_TEXCOORD, 2, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	material_ben.diffuse_color[0] = 0.951323;
+	material_ben.diffuse_color[1] = 0.931232;
+	material_ben.diffuse_color[2] = 0.642333;
+	material_ben.diffuse_color[3] = 1.0f;
+}
+
+void draw_ben(int cameraIndex) {
+
+	ModelViewMatrix = glm::rotate(ViewMatrix[cameraIndex], -90 * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	ModelViewMatrix = glm::translate(ModelViewMatrix, ben_pos);
+	ModelViewMatrix = glm::scale(ModelViewMatrix, glm::vec3(50.0f, -50.0f, -1.0f));
+	//ModelViewMatrix = glm::rotate(ModelViewMatrix, -90*TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
+
+	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
+	glFrontFace(GL_CW);
+
+	glUniform3f(loc_primitive_color, material_ben.diffuse_color[0], material_ben.diffuse_color[1], material_ben.diffuse_color[2]);
+	glBindVertexArray(ben_VAO);
+	glDrawArrays(GL_TRIANGLES, ben_vertex_offset[cur_frame_ben], 3 * ben_n_triangles[cur_frame_ben]);
+	glBindVertexArray(0);
 }
 
 void cleanup_OpenGL_stuffs(void) {
-	for (int i = 0; i < n_static_objects; i++) {
+	for (int i = 0; i < N_MAX_STATIC_OBJECTS; i++) {
 		glDeleteVertexArrays(1, &(static_objects[i].VAO));
 		glDeleteBuffers(1, &(static_objects[i].VBO));
 	}
@@ -548,5 +699,9 @@ void cleanup_OpenGL_stuffs(void) {
 	glDeleteVertexArrays(1, &VAO_axes);
 	glDeleteBuffers(1, &VBO_axes);
 
-	
+	glDeleteVertexArrays(1, &spider_VAO);
+	glDeleteBuffers(1, &spider_VBO);
+
+	glDeleteVertexArrays(1, &ben_VAO);
+	glDeleteBuffers(1, &ben_VBO);
 }

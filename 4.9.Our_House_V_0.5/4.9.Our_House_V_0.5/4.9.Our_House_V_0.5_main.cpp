@@ -62,6 +62,7 @@ typedef struct _CALLBACK_CONTEXT {
 CALLBACK_CONTEXT cc;
 
 bool orthoOrPerspective = false;
+bool showViewingVolume = true;
 
 
 bool keyState[108] = { 0 };
@@ -146,14 +147,17 @@ void display(void) {
 		draw_static_object(&(static_objects[OBJ_LIGHT]), 2, i);
 		draw_static_object(&(static_objects[OBJ_LIGHT]), 3, i);
 		draw_static_object(&(static_objects[OBJ_LIGHT]), 4, i);
+		draw_static_object(&(static_objects[OBJ_LIGHT]), 5, i);
+		draw_static_object(&(static_objects[OBJ_LIGHT]), 6, i);
 
 		draw_static_object(&(static_objects[OBJ_TEAPOT]), 0, i);
+		//draw_static_object(&(static_objects[OBJ_TEAPOT]), 1, i);
 		draw_static_object(&(static_objects[OBJ_NEW_CHAIR]), 0, i);
 		draw_static_object(&(static_objects[OBJ_FRAME]), 0, i);
 		draw_static_object(&(static_objects[OBJ_NEW_PICTURE]), 0, i);
-		draw_static_object(&(static_objects[OBJ_COW]), 0, i);
-		draw_static_object(&(static_objects[OBJ_COW1]), 0, i);
-		draw_static_object(&(static_objects[OBJ_COW2]), 0, i);
+		draw_static_object(&(static_objects[OBJ_COW]), 1, i);
+		//draw_static_object(&(static_objects[OBJ_COW1]), 0, i);
+		//draw_static_object(&(static_objects[OBJ_COW2]), 0, i);
 
 		draw_car_dummy(i);
 
@@ -161,6 +165,7 @@ void display(void) {
 		draw_spider(i);
 		draw_ben(i);
 
+		draw_two_hier_obj(&(static_objects[OBJ_TABLE]), &(static_objects[OBJ_TEAPOT]), 2, 1, i);
 		draw_animated_tiger(i);
 	}
 
@@ -170,6 +175,8 @@ void display(void) {
 void keyboard(unsigned char key, int x, int y) {
 	static int flag_cull_face = 0, polygon_fill_on = 0, depth_test_on = 0;
 	CAMERA& cam = camera[CAMERA_PERSPECTIVE1];
+	Object& obj = static_objects[OBJ_LIGHT];
+	int idx = 6;
 	switch (key) {
 	case 27: // ESC key
 		glutLeaveMainLoop(); // Incur destuction callback for cleanups.
@@ -222,32 +229,71 @@ void keyboard(unsigned char key, int x, int y) {
 		break;*/
 
 	case 'w':
-		ben_pos += glm::vec3(0.0f, -1.0f, 0.0f);
+		obj.move(idx, glm::vec3(0.0f, -1.0f, 0.0f));
+		//ben_pos += glm::vec3(0.0f, -1.0f, 0.0f);
 		//cam.move(glm::vec3(0.0f, -1.0f, 0.0f));
 		break;
 	case 'a':
-		ben_pos += glm::vec3(0.0f, 1.0f, 0.0f);
+		obj.move(idx, glm::vec3(0.0f, 1.0f, 0.0f));
+		//ben_pos += glm::vec3(0.0f, 1.0f, 0.0f);
 		//cam.move(glm::vec3(0.0f, 1.0f, 0.0f));
 		break;
 	case 's':
-		ben_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
+		obj.move(idx, glm::vec3(-1.0f, 0.0f, 0.0f));
+		//ben_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
 		//cam.move(glm::vec3(-1.0f, 0.0f, 0.0f));
 		break;
 	case 'd':
-		ben_pos += glm::vec3(1.0f, 0.0f, 0.0f);
+		obj.move(idx, glm::vec3(1.0f, 0.0f, 0.0f));
+		//ben_pos += glm::vec3(1.0f, 0.0f, 0.0f);
 		//cam.move(glm::vec3(1.0f, 0.0f, 0.0f));
 		break;
 	case 'r':
-		ben_pos += glm::vec3(0.0f, 0.0f, -1.0f);
+		//obj.move(1, glm::vec3(0.0f, 0.0f, -1.0f));
+		//ben_pos += glm::vec3(0.0f, 0.0f, -1.0f);
 		//cam.move(glm::vec3(0.0f, 0.0f, -1.0f));
 		break;
 	case 'e':
-		ben_pos += glm::vec3(0.0f, 0.0f, 1.0f);
+		//obj.move(1, glm::vec3(0.0f, 0.0f, 1.0f));
+		//ben_pos += glm::vec3(0.0f, 0.0f, 1.0f);
 		//cam.move(glm::vec3(0.0f, 0.0f, 1.0f));
+		break;
+
+	case 'o':
+		showViewingVolume = !showViewingVolume;
+		for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
+			camera[i].isViewingVolumeVisible = false;
+		}
+		camera[CAMERA_MAIN].isViewingVolumeVisible = showViewingVolume;
+		if (orthoOrPerspective == false) {
+			camera[CAMERA_ORTHO1].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_ORTHO2].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_ORTHO3].isViewingVolumeVisible = showViewingVolume;
+		}
+		else {
+			camera[CAMERA_PERSPECTIVE1].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_PERSPECTIVE2].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_PERSPECTIVE3].isViewingVolumeVisible = showViewingVolume;
+		}
 		break;
 
 	case 'p':
 		orthoOrPerspective = !orthoOrPerspective;
+		dotColor[0][0] = 255.0f; dotColor[0][1] = 255.0f; dotColor[0][2] = 0.0f;
+		dotColor[1][0] = 0.0f; dotColor[1][1] = 255.0f; dotColor[1][2] = 255.0f;
+		for (int i = 1; i < NUMBER_OF_CAMERAS; i++) {
+			camera[i].isViewingVolumeVisible = false;
+		}
+		if (orthoOrPerspective == false) {
+			camera[CAMERA_ORTHO1].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_ORTHO2].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_ORTHO3].isViewingVolumeVisible = showViewingVolume;
+		}
+		else {
+			camera[CAMERA_PERSPECTIVE1].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_PERSPECTIVE2].isViewingVolumeVisible = showViewingVolume;
+			camera[CAMERA_PERSPECTIVE3].isViewingVolumeVisible = showViewingVolume;
+		}
 		break;
 
 	case 'q':
@@ -255,7 +301,7 @@ void keyboard(unsigned char key, int x, int y) {
 		
 		break;
 	}
-	printf("%f %f %f\n", ben_pos.x, ben_pos.y, ben_pos.z);
+	printf("%f %f %f\n", obj.pos[idx].x, obj.pos[idx].y, obj.pos[idx].z);
 }
 
 void keySpecial(int key, int x, int y) {
@@ -303,6 +349,7 @@ void keySpecialUp(int key, int x, int y) {
 void keySpecialOperation() {
 	Object& obj = static_objects[OBJ_COW1];
 	CAMERA& cam = camera[3];
+	int idx = 6;
 	
 	if (keyState[GLUT_KEY_LEFT] == true) {
 		obj.move(0, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -400,20 +447,38 @@ void reshape(int width, int height) {
 }
 
 void timer_scene(int timestamp_scene) {
+
+	//float addColor1 = ((rand() % 255) - (rand() % 255)) / 255.0f;
+	float addColor1 = sin(((timestamp_scene*10)%180)*TO_RADIAN);
+	float addColor2 = sin(((timestamp_scene*14+45)%180)*TO_RADIAN);
+	float addColor3 = sin(((timestamp_scene*17+90)%180)*TO_RADIAN);
+	static int spider_move_count = 0;
+	//printf("%f\n", addColor1);
+
 	tiger_data.cur_frame = timestamp_scene % N_TIGER_FRAMES;
 	if (cur_dir_spider) {
 		cur_frame_spider--;
 		if (cur_frame_spider < 0) {
-			cur_frame_spider = 0;
-			cur_dir_spider = false;
+			cur_frame_spider = N_SPIDER_FRAMES - 1;
+			spider_move_count++;
+			if (spider_move_count > 2) {
+				cur_frame_spider = 0;
+				spider_move_count = 0;
+				cur_dir_spider = false;
+			}
 		}
 		spider_pos += glm::vec3(0.0, 0.0, 0.1f);
 	}
 	else {
 		cur_frame_spider++;
 		if (cur_frame_spider > N_SPIDER_FRAMES - 1) {
-			cur_frame_spider = N_SPIDER_FRAMES - 1;
-			cur_dir_spider = true;
+			cur_frame_spider = 0;
+			spider_move_count++;
+			if (spider_move_count > 2) {
+				cur_frame_spider = N_SPIDER_FRAMES - 1;
+				spider_move_count = 0;
+				cur_dir_spider = true;
+			}
 			//cur_frame_spider = 0;
 		}
 		spider_pos += glm::vec3(0.0, 0.0, -0.1f);
@@ -421,9 +486,56 @@ void timer_scene(int timestamp_scene) {
 	//cur_frame_spider = timestamp_scene % N_SPIDER_FRAMES;
 	tiger_data.rotation_angle = (timestamp_scene % 360)*TO_RADIAN;
 	rotation_angle_car = ((timestamp_scene) % 360)*TO_RADIAN;
+	static_objects[OBJ_TEAPOT].rotationAngle[1] = ((timestamp_scene*10) % 360)*TO_RADIAN;
+	/*static_objects[OBJ_LIGHT].material[5].diffuse.r = 0.75164f * addColor1;
+	static_objects[OBJ_LIGHT].material[5].diffuse.g= 0.60648f * addColor2;
+	static_objects[OBJ_LIGHT].material[5].diffuse.b = 0.22648f * addColor3;
+
+	static_objects[OBJ_LIGHT].material[6].diffuse.r = 0.15664f * addColor1;
+	static_objects[OBJ_LIGHT].material[6].diffuse.g = 0.84248f * addColor2;
+	static_objects[OBJ_LIGHT].material[6].diffuse.b = 0.02540f * addColor3;*/
+	//printf("%f\n", static_objects[OBJ_TEAPOT].rotationAngle[1]);
 
 	glutPostRedisplay();
 	glutTimerFunc(100, timer_scene, (timestamp_scene + 1) % INT_MAX);
+}
+
+void timer_scene2(int timestamp_scene) {
+	static bool cameraBlink = false;
+	
+	if (orthoOrPerspective == false) {
+		if (cameraBlink == false) {
+			cameraBlink = true;
+			dotColor[orthoOrPerspective][0] = 0.0f;
+			dotColor[orthoOrPerspective][1] = 0.0f;
+			dotColor[orthoOrPerspective][2] = 0.0f;
+		}
+		else {
+			cameraBlink = false;
+			dotColor[orthoOrPerspective][0] = 255.0f;
+			dotColor[orthoOrPerspective][1] = 255.0f;
+			dotColor[orthoOrPerspective][2] = 0.0f;
+		}
+	}
+	else {
+		if (cameraBlink == false) {
+			cameraBlink = true;
+			dotColor[orthoOrPerspective][0] = 255.0f;
+			dotColor[orthoOrPerspective][1] = 255.0f;
+			dotColor[orthoOrPerspective][2] = 255.0f;
+		}
+		else {
+			cameraBlink = false;
+			dotColor[orthoOrPerspective][0] = 0.0f;
+			dotColor[orthoOrPerspective][1] = 255.0f;
+			dotColor[orthoOrPerspective][2] = 255.0f;
+		}
+	}
+	
+	
+
+	glutPostRedisplay();
+	glutTimerFunc(100, timer_scene2, 0);
 }
 
 
@@ -558,6 +670,7 @@ void register_callbacks(void) {
 	glutMotionFunc(motion);
 	glutReshapeFunc(reshape);
 	glutTimerFunc(100, timer_scene, 0);
+	glutTimerFunc(100, timer_scene2, 0);
 	glutCloseFunc(cleanup);
 }
 

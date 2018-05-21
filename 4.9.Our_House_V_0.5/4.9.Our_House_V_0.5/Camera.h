@@ -107,8 +107,8 @@ typedef struct _CAMERA {
 		void draw_line(void) { // Draw line in its MC.
 							   // y = x - win_height/4
 							   //glLineWidth(0.5f);
-			GLfloat color[3] = { 255.0f, 200.0f, 200.0f };
-			glUniform3fv(loc_primitive_color, 1, dotColor[cameraOrthoOrPerspective]);
+			GLfloat color[2][3] = { { 255.0f, 255.0f, 0.0f }, { 0.0f, 255.0f, 255.0f } };
+			glUniform3fv(loc_primitive_color, 1, color[cameraOrthoOrPerspective]);
 			glBindVertexArray(VAO_line);
 			glDrawArrays(GL_LINES, 0, 24);
 			glBindVertexArray(0);
@@ -398,7 +398,7 @@ void initialize_camera(void) {
 	camera[CAMERA_ORTHO1].fov_y = 30.0f;
 	camera[CAMERA_ORTHO1].aspect_ratio = 1.0f; // will be set when the viewing window pops up.
 	camera[CAMERA_ORTHO1].near_clip = 1.0f;
-	camera[CAMERA_ORTHO1].far_clip = 500.0f;
+	camera[CAMERA_ORTHO1].far_clip = 300.0f;
 
 	camera[CAMERA_ORTHO1].viewingVolume.prepare_line(false);
 
@@ -421,7 +421,7 @@ void initialize_camera(void) {
 	camera[CAMERA_ORTHO2].fov_y = 60.0f;
 	camera[CAMERA_ORTHO2].aspect_ratio = 1.0f; // will be set when the viewing window pops up.
 	camera[CAMERA_ORTHO2].near_clip = 1.0f;
-	camera[CAMERA_ORTHO2].far_clip = 300.0f;
+	camera[CAMERA_ORTHO2].far_clip = 100.0f;
 
 	camera[CAMERA_ORTHO2].viewingVolume.prepare_line(false);
 
@@ -511,11 +511,12 @@ void initialize_camera(void) {
 
 	for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
 		camera[i].isViewingVolumeVisible = false;
-
-		
 	}
 	define_3Ddot();
-	camera[CAMERA_PERSPECTIVE3].isViewingVolumeVisible = true;
+	camera[CAMERA_MAIN].isViewingVolumeVisible = true;
+	camera[CAMERA_ORTHO1].isViewingVolumeVisible = true;
+	camera[CAMERA_ORTHO2].isViewingVolumeVisible = true;
+	camera[CAMERA_ORTHO3].isViewingVolumeVisible = true;
 	
 
 	//camera_selected = 0;

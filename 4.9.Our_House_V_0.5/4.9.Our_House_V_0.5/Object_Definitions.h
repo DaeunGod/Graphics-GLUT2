@@ -805,9 +805,9 @@ void prepare_ben(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	material_ben.diffuse_color[0] = 0.951323;
-	material_ben.diffuse_color[1] = 0.931232;
-	material_ben.diffuse_color[2] = 0.642333;
+	material_ben.diffuse_color[0] = 0.951323f;
+	material_ben.diffuse_color[1] = 0.931232f;
+	material_ben.diffuse_color[2] = 0.642333f;
 	material_ben.diffuse_color[3] = 1.0f;
 }
 
@@ -854,7 +854,47 @@ void draw_ben(int cameraIndex) {
 
 void update_ben_motion(int timestamp_scene) {
 	ben_angle = (timestamp_scene % 360) * TO_RADIAN;
+}
 
+GLuint path_VBO, path_VAO;
+GLfloat *path_vertices;
+int path_n_vertices;
+
+glm::vec3 path_pos = glm::vec3(196.0f, 51.0f, 0.0f);
+
+void prepare_path(void) { // Draw path.
+						  //	return;
+	path_n_vertices = read_path_file(&path_vertices, "Data/path.txt");
+	//printf("%d %f\n", path_n_vertices, path_vertices[(path_n_vertices - 1)]);
+	// Initialize vertex array object.
+	glGenVertexArrays(1, &path_VAO);
+	glBindVertexArray(path_VAO);
+	glGenBuffers(1, &path_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, path_VBO);
+	glBufferData(GL_ARRAY_BUFFER, path_n_vertices * 3 * sizeof(float), path_vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(LOC_VERTEX, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+
+void draw_path(int cameraIndex) {
+	glm::mat4 _pos = glm::mat4(1.0f);
+
+	_pos = glm::translate(_pos, path_pos);
+	_pos = glm::scale(_pos, glm::vec3(0.5f, 1.7f, 0.5f));
+	//_pos = glm::rotate(_pos, 45.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+	ModelViewMatrix = ViewMatrix[cameraIndex] * _pos;
+	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
+	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
+
+
+	glBindVertexArray(path_VAO);
+	glUniform3f(loc_primitive_color, 1.000f, 1.000f, 0.000f); // color name: Yellow
+	glDrawArrays(GL_LINE_STRIP, 0, path_n_vertices);
 }
 
 void cleanup_OpenGL_stuffs(void) {
@@ -876,6 +916,10 @@ void cleanup_OpenGL_stuffs(void) {
 
 	glDeleteVertexArrays(1, &ben_VAO);
 	glDeleteBuffers(1, &ben_VBO);
+
+	glDeleteVertexArrays(1, &path_VAO);
+	glDeleteBuffers(1, &path_VBO);
+	
 }
 
 void draw_two_hier_obj(Object *obj_ptr1, Object *obj_ptr2, int obj1_instance_ID, int obj2_instance_ID, int cameraIndex) {
@@ -965,11 +1009,6 @@ enum TIGER_MOVE {
 };
 TIGER_MOVE tiger_move_status = TIGER_MOVE1;
 int tiger_move_count = 0;
-
-/*if (tiger_move_count > 28) {
-	tiger_move_count = 0;
-	tiger_move_status = NUMBER_OF_TIGER_MOVE;
-}*/
 
 void update_tiger_motion(int timestamp_scene) {
 	
@@ -1165,3 +1204,5 @@ void update_tiger_motion(int timestamp_scene) {
 		tiger_move_status = TIGER_MOVE1;
 	}
 }
+
+

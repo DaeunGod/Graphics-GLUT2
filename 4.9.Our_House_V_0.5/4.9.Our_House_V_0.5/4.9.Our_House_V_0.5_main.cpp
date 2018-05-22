@@ -171,6 +171,8 @@ void display(void) {
 
 		draw_two_hier_obj(&(static_objects[OBJ_TABLE]), &(static_objects[OBJ_TEAPOT]), 2, 1, i);
 		draw_animated_tiger(i);
+
+		draw_path(i);
 	}
 
 	glutSwapBuffers();
@@ -232,35 +234,43 @@ void keyboard(unsigned char key, int x, int y) {
 		glutPostRedisplay();
 		break;*/
 
-	case 'w':
-		//obj.move(idx, glm::vec3(0.0f, -1.0f, 0.0f));
-		ben_pos += glm::vec3(0.0f, -1.0f, 0.0f);
-		//cam.move(glm::vec3(0.0f, -1.0f, 0.0f));
-		break;
-	case 'a':
-		//obj.move(idx, glm::vec3(0.0f, 1.0f, 0.0f));
-		ben_pos += glm::vec3(0.0f, 1.0f, 0.0f);
-		//cam.move(glm::vec3(0.0f, 1.0f, 0.0f));
-		break;
-	case 's':
-		//obj.move(idx, glm::vec3(-1.0f, 0.0f, 0.0f));
-		ben_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
-		//cam.move(glm::vec3(-1.0f, 0.0f, 0.0f));
-		break;
-	case 'd':
-		//obj.move(idx, glm::vec3(1.0f, 0.0f, 0.0f));
-		ben_pos += glm::vec3(1.0f, 0.0f, 0.0f);
-		//cam.move(glm::vec3(1.0f, 0.0f, 0.0f));
-		break;
-	case 'r':
-		//obj.move(1, glm::vec3(0.0f, 0.0f, -1.0f));
-		ben_pos += glm::vec3(0.0f, 0.0f, -1.0f);
-		//cam.move(glm::vec3(0.0f, 0.0f, -1.0f));
-		break;
-	case 'e':
-		//obj.move(1, glm::vec3(0.0f, 0.0f, 1.0f));
-		ben_pos += glm::vec3(0.0f, 0.0f, 1.0f);
-		//cam.move(glm::vec3(0.0f, 0.0f, 1.0f));
+	//case 'w':
+	//	//obj.move(idx, glm::vec3(0.0f, -1.0f, 0.0f));
+	//	ben_pos += glm::vec3(0.0f, -1.0f, 0.0f);
+	//	//cam.move(glm::vec3(0.0f, -1.0f, 0.0f));
+	//	break;
+	//case 'a':
+	//	//obj.move(idx, glm::vec3(0.0f, 1.0f, 0.0f));
+	//	ben_pos += glm::vec3(0.0f, 1.0f, 0.0f);
+	//	//cam.move(glm::vec3(0.0f, 1.0f, 0.0f));
+	//	break;
+	//case 's':
+	//	//obj.move(idx, glm::vec3(-1.0f, 0.0f, 0.0f));
+	//	ben_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
+	//	//cam.move(glm::vec3(-1.0f, 0.0f, 0.0f));
+	//	break;
+	//case 'd':
+	//	//obj.move(idx, glm::vec3(1.0f, 0.0f, 0.0f));
+	//	ben_pos += glm::vec3(1.0f, 0.0f, 0.0f);
+	//	//cam.move(glm::vec3(1.0f, 0.0f, 0.0f));
+	//	break;
+	//case 'r':
+	//	//obj.move(1, glm::vec3(0.0f, 0.0f, -1.0f));
+	//	ben_pos += glm::vec3(0.0f, 0.0f, -1.0f);
+	//	//cam.move(glm::vec3(0.0f, 0.0f, -1.0f));
+	//	break;
+	//case 'e':
+	//	//obj.move(1, glm::vec3(0.0f, 0.0f, 1.0f));
+	//	ben_pos += glm::vec3(0.0f, 0.0f, 1.0f);
+	//	//cam.move(glm::vec3(0.0f, 0.0f, 1.0f));
+	//	break;
+
+	case 'u':
+		showViewingVolume = false;
+		for (int i = 0; i < NUMBER_OF_CAMERAS; i++) {
+			camera[i].isViewingVolumeVisible = false;
+		}
+		camera[0].isViewingVolumeVisible = true;
 		break;
 
 	/// MARK - CCTV and blueprint CONTROL
@@ -369,7 +379,7 @@ void keyboard(unsigned char key, int x, int y) {
 
 		break;
 	}
-	printf("%f %f %f\n", ben_pos.x, ben_pos.y, ben_pos.z);
+	//printf("%f %f %f\n", ben_pos.x, ben_pos.y, ben_pos.z);
 }
 
 void keySpecial(int key, int x, int y) {
@@ -417,22 +427,18 @@ void keySpecialUp(int key, int x, int y) {
 void keySpecialOperation() {
 	static int aaaaaaaaaaaaangle = 0;
 	if (keyState[GLUT_KEY_LEFT] == true) {
-		aaaaaaaaaaaaangle = (aaaaaaaaaaaaangle-1);
-		if (aaaaaaaaaaaaangle < 0)
-			aaaaaaaaaaaaangle = 360;
-		tiger_data.rotate(-1, tiger_data.vaxis);
+		path_pos += glm::vec3(1.0f, 0.0f, 0.0f);
 	}
 	if (keyState[GLUT_KEY_RIGHT] == true) {
-		aaaaaaaaaaaaangle = (aaaaaaaaaaaaangle +1) % 360;
-		tiger_data.rotate(1, tiger_data.vaxis);
+		path_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
 	}
 	if (keyState[GLUT_KEY_UP] == true) {
-		tiger_data.move(5.0f);
+		path_pos += glm::vec3(0.0f, 1.0f, 0.0f);
 	}
 	if (keyState[GLUT_KEY_DOWN] == true) {
-		tiger_data.move(-5.0f);
+		path_pos += glm::vec3(0.0f, -1.0f, 0.0f);
 	}
-	printf("%f %f %f\n", tiger_data.pos.x, tiger_data.pos.y, tiger_data.pos.z);
+	//printf("%f %f %f\n", path_pos.x, path_pos.y, path_pos.z);
 }
 
 void reshape(int width, int height) {
@@ -515,6 +521,7 @@ void timer_scene(int timestamp_scene) {
 	//float addColor1 = ((rand() % 255) - (rand() % 255)) / 255.0f;
 	static bool cameraBlink = false;
 	static int spider_move_count = 0;
+	static int path_Index = 0;
 	//printf("%f\n", addColor1);
 
 	tiger_data.cur_frame = timestamp_scene % N_TIGER_FRAMES;
@@ -547,7 +554,13 @@ void timer_scene(int timestamp_scene) {
 	}
 	//cur_frame_spider = timestamp_scene % N_SPIDER_FRAMES;
 	//tiger_data.rotation_angle = (timestamp_scene % 360)*TO_RADIAN;
-	rotation_angle_car = ((timestamp_scene) % 360)*TO_RADIAN;
+	//rotation_angle_car = ((timestamp_scene) % 360)*TO_RADIAN;
+	//car_pos.x = path_pos.x + path_vertices[path_Index]*0.5f;
+	//car_pos.y = path_pos.y + path_vertices[path_Index +1]*0.5f;
+	//path_Index += 3;
+	car_data.rotate(-3, car_data.vaxis);
+	car_data.move(0.7f);
+	
 	static_objects[OBJ_TEAPOT].rotationAngle[1] = ((timestamp_scene*10) % 360)*TO_RADIAN;
 	/*static_objects[OBJ_LIGHT].material[5].diffuse.r = 0.75164f * addColor1;
 	static_objects[OBJ_LIGHT].material[5].diffuse.g= 0.60648f * addColor2;
@@ -735,6 +748,9 @@ void prepare_scene(void) {
 
 	prepare_spider();
 	prepare_ben();
+
+	prepare_path();
+	car_data.init();
 }
 
 void cleanup(void) {

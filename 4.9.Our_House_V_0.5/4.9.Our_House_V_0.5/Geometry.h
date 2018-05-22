@@ -91,3 +91,35 @@ void free_geom_obj(int geom_obj_ID) {
 	glDeleteVertexArrays(1, &geom_obj_VAO[geom_obj_ID]);
 	glDeleteBuffers(1, &geom_obj_VBO[geom_obj_ID]);
 }
+
+
+int read_path_file(GLfloat **object, const char *filename) {
+	int i, n_vertices;
+	float *flt_ptr;
+	FILE *fp;
+
+	fprintf(stdout, "Reading path from the path file %s...\n", filename);
+	fp = fopen(filename, "r");
+	if (fp == NULL) {
+		fprintf(stderr, "Cannot open the path file %s ...", filename);
+		return -1;
+	}
+
+	fscanf(fp, "%d", &n_vertices);
+	*object = (float *)malloc(n_vertices * 3 * sizeof(float));
+	if (*object == NULL) {
+		fprintf(stderr, "Cannot allocate memory for the path file %s ...", filename);
+		return -1;
+	}
+
+	flt_ptr = *object;
+	for (i = 0; i < n_vertices; i++) {
+		fscanf(fp, "%f %f %f", flt_ptr, flt_ptr + 1, flt_ptr + 2);
+		flt_ptr += 3;
+	}
+	fclose(fp);
+
+	fprintf(stdout, "Read %d vertices successfully.\n\n", n_vertices);
+
+	return n_vertices;
+}

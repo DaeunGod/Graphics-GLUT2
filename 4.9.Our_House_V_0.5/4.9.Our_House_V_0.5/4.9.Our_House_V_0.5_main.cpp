@@ -415,32 +415,24 @@ void keySpecialUp(int key, int x, int y) {
 }
 
 void keySpecialOperation() {
-	Object& obj = static_objects[OBJ_COW1];
-	CAMERA& cam = camera[3];
-	int idx = 6;
-	
+	static int aaaaaaaaaaaaangle = 0;
 	if (keyState[GLUT_KEY_LEFT] == true) {
-		obj.move(0, glm::vec3(1.0f, 0.0f, 0.0f));
-		cam.move(glm::vec3(0.0f, -1.0f, 0.0f));
-		//obj->setPosition(obj->getPosition() - glm::vec3(3.0f, 0.0f, 0.0f));
+		aaaaaaaaaaaaangle = (aaaaaaaaaaaaangle-1);
+		if (aaaaaaaaaaaaangle < 0)
+			aaaaaaaaaaaaangle = 360;
+		tiger_data.rotate(-1, tiger_data.vaxis);
 	}
 	if (keyState[GLUT_KEY_RIGHT] == true) {
-		//obj->setPosition(obj->getPosition() + glm::vec3(3.0f, 0.0f, 0.0f));
-		obj.move(0, glm::vec3(-1.0f, 0.0f, 0.0f));
-		cam.move(glm::vec3(0.0f, 1.0f, 0.0f));
+		aaaaaaaaaaaaangle = (aaaaaaaaaaaaangle +1) % 360;
+		tiger_data.rotate(1, tiger_data.vaxis);
 	}
 	if (keyState[GLUT_KEY_UP] == true) {
-		//obj->setPosition(obj->getPosition() + glm::vec3(0.0f, 3.0f, 0.0f));
-		obj.move(0, glm::vec3(0.0f, 1.0f, 0.0f));
-		cam.move(glm::vec3(0.0f, 0.0f, 1.0f));
+		tiger_data.move(5.0f);
 	}
 	if (keyState[GLUT_KEY_DOWN] == true) {
-		//obj->setPosition(obj->getPosition() - glm::vec3(0.0f, 3.0f, 0.0f));
-		obj.move(0, glm::vec3(0.0f, -1.0f, 0.0f));
-		cam.move(glm::vec3(0.0f, 0.0f, -1.0f));
+		tiger_data.move(-5.0f);
 	}
-	//printf("%f %f %f\n", obj.pos.x, obj.pos.y, obj.pos.z);
-	set_ViewMatrix_from_camera_frame(ViewMatrix[3], camera[3]);
+	printf("%f %f %f\n", tiger_data.pos.x, tiger_data.pos.y, tiger_data.pos.z);
 }
 
 void reshape(int width, int height) {
@@ -554,7 +546,7 @@ void timer_scene(int timestamp_scene) {
 		spider_pos += glm::vec3(0.0, 0.0, -0.1f);
 	}
 	//cur_frame_spider = timestamp_scene % N_SPIDER_FRAMES;
-	tiger_data.rotation_angle = (timestamp_scene % 360)*TO_RADIAN;
+	//tiger_data.rotation_angle = (timestamp_scene % 360)*TO_RADIAN;
 	rotation_angle_car = ((timestamp_scene) % 360)*TO_RADIAN;
 	static_objects[OBJ_TEAPOT].rotationAngle[1] = ((timestamp_scene*10) % 360)*TO_RADIAN;
 	/*static_objects[OBJ_LIGHT].material[5].diffuse.r = 0.75164f * addColor1;
@@ -566,7 +558,7 @@ void timer_scene(int timestamp_scene) {
 	static_objects[OBJ_LIGHT].material[6].diffuse.b = 0.02540f * addColor3;*/
 	//printf("%f\n", static_objects[OBJ_TEAPOT].rotationAngle[1]);
 
-	
+	update_tiger_motion(timestamp_scene);
 
 	
 

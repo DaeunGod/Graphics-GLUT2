@@ -2,6 +2,8 @@
 // The object modelling tasks performed by this file are usually done 
 // by reading a scene configuration file or through a help of graphics user interface!!!
 
+//extern CAMERA camera[NUMBER_OF_CAMERAS];
+
 #define BUFFER_OFFSET(offset) ((GLvoid *) (offset))
 
 typedef struct _material {
@@ -552,10 +554,61 @@ void draw_axes() {
 Object tiger[N_TIGER_FRAMES];
 struct {
 	int cur_frame = 0;
-	float rotation_angle = 0.0f;
+	float rotation_angle_z = 0.0f;
+	float rotation_angle_x = 0.0f;
+	glm::vec3 dir = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 pos = glm::vec3(111.0f, 139.0f, 0.0f);
+	float size = 0.1f;
+
+	glm::vec3 uaxis;
+	glm::vec3 vaxis;
+	glm::vec3 naxis;
+
+	void move(float to) {
+		pos += -naxis * to;
+	}
+
+	void rotate(float _angle, glm::vec3 axis = glm::vec3(0.0f, 0.0f, 1.0f)) {
+		glm::mat3 rot = glm::mat3(1.0f);
+		rotation_angle_z -= _angle*TO_RADIAN;
+
+
+		rot = glm::mat3(glm::rotate(glm::mat4(1.0f), _angle*TO_RADIAN, axis));
+
+		uaxis = rot * uaxis;
+		vaxis = rot * vaxis;
+		naxis = rot * naxis;
+
+		//printf("%f %f %f %f\n", rotation_angle * TO_DEGREE, naxis.x, naxis.y, naxis.z);
+	}
+
+	void rotate_x(float _angle, glm::vec3 axis = glm::vec3(0.0f, 0.0f, 1.0f)) {
+		glm::mat3 rot = glm::mat3(1.0f);
+		rotation_angle_x -= _angle * TO_RADIAN;
+
+
+		rot = glm::mat3(glm::rotate(glm::mat4(1.0f), _angle*TO_RADIAN, axis));
+
+		uaxis = rot * uaxis;
+		vaxis = rot * vaxis;
+		naxis = rot * naxis;
+
+		//printf("%f %f %f %f\n", rotation_angle * TO_DEGREE, naxis.x, naxis.y, naxis.z);
+	}
+
+	void init() {
+		glm::vec3 _vup = glm::vec3(0.0f, 0.0f, 1.0f), _vpn;
+		glm::vec3 center = pos + glm::vec3( 0.0f, -1.0f, 0.0f);
+
+		_vpn = pos - center;
+		uaxis = glm::normalize(glm::cross(_vup, _vpn));
+		vaxis = glm::normalize(glm::cross(_vpn, uaxis));
+		naxis = glm::normalize(_vpn);
+	}
 } tiger_data;
 
 void define_animated_tiger(void) {
+	tiger_data.init();
 	for (int i = 0; i < N_TIGER_FRAMES; i++) {
 		sprintf(tiger[i].filename, "Data/Tiger_%d%d_triangles_vnt.geom", i / 10, i % 10);
 
@@ -573,13 +626,23 @@ void define_animated_tiger(void) {
 		tiger[i].material[0].specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
 		tiger[i].material[0].exponent = 128.0f*0.21794872f;
 	}
+	
+	//tiger_data.calcModelMatrix();
+	tiger_data.rotate(90, tiger_data.vaxis);
+	//tiger_data.move(50.0f);
 }
 
 void draw_animated_tiger(int cameraIndex) {
-	ModelViewMatrix = glm::rotate(ViewMatrix[cameraIndex], -tiger_data.rotation_angle, glm::vec3(0.0f, 0.0f, 1.0f));
- 	ModelViewMatrix = glm::translate(ModelViewMatrix, glm::vec3(100.0f, 0.0f, 0.0f));
- 	ModelViewMatrix *= tiger[tiger_data.cur_frame].ModelMatrix[0];
+	glm::mat4 _model = glm::mat4(1.0f);
+	glm::mat4 rot = glm::mat4(1.0f);
+	glm::mat4 obj = glm::mat4(1.0f);
 
+	tiger[tiger_data.cur_frame].ModelMatrix[0] = glm::translate(glm::mat4(1.0f), tiger_data.pos);
+	tiger[tiger_data.cur_frame].ModelMatrix[0] = glm::rotate(tiger[tiger_data.cur_frame].ModelMatrix[0], -tiger_data.rotation_angle_z, glm::vec3(0.0f, 0.0f, 1.0f));
+	tiger[tiger_data.cur_frame].ModelMatrix[0] = glm::rotate(tiger[tiger_data.cur_frame].ModelMatrix[0], tiger_data.rotation_angle_x, glm::vec3(1.0f, 0.0f, 0.0f));
+	tiger[tiger_data.cur_frame].ModelMatrix[0] = glm::scale(tiger[tiger_data.cur_frame].ModelMatrix[0], glm::vec3(tiger_data.size));
+
+	ModelViewMatrix = ViewMatrix[cameraIndex] * tiger[tiger_data.cur_frame].ModelMatrix[0];
 	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
 	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
 
@@ -590,9 +653,30 @@ void draw_animated_tiger(int cameraIndex) {
 	glDrawArrays(GL_TRIANGLES, 0, 3 * tiger[tiger_data.cur_frame].n_triangles);
 	glBindVertexArray(0);
 
-	ModelViewProjectionMatrix = glm::scale(ModelViewProjectionMatrix, glm::vec3(20.0f, 20.0f, 20.0f));
+
+	rot[0][0] = tiger_data.uaxis.x; rot[1][0] = tiger_data.vaxis.x; rot[2][0] = tiger_data.naxis.x;
+	rot[0][1] = tiger_data.uaxis.y; rot[1][1] = tiger_data.vaxis.y; rot[2][1] = tiger_data.naxis.y;
+	rot[0][2] = tiger_data.uaxis.z; rot[1][2] = tiger_data.vaxis.z; rot[2][2] = tiger_data.naxis.z;
+
+	obj = glm::translate(glm::mat4(1.0f), tiger_data.pos);
+	//obj = glm::rotate(obj, -tiger_data.rotation_angle, glm::vec3(0.0f, 0.0f, 1.0f));
+	obj = obj * rot;
+	obj = glm::scale(obj, glm::vec3(WC_AXIS_LENGTH*0.5f, WC_AXIS_LENGTH*0.5f, WC_AXIS_LENGTH*0.5f));
+
+	ModelViewMatrix = ViewMatrix[cameraIndex] * obj;
+	ModelViewProjectionMatrix = ProjectionMatrix[cameraIndex] * ModelViewMatrix;
 	glUniformMatrix4fv(loc_ModelViewProjectionMatrix, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
-	draw_axes(ViewMatrix[cameraIndex], cameraIndex);
+
+	glBindVertexArray(VAO_axes);
+	glUniform3fv(loc_primitive_color, 1, axes_color[0]);
+	glDrawArrays(GL_LINES, 0, 2);
+	glUniform3fv(loc_primitive_color, 1, axes_color[1]);
+	glDrawArrays(GL_LINES, 2, 2);
+	glUniform3fv(loc_primitive_color, 1, axes_color[2]);
+	glDrawArrays(GL_LINES, 4, 2);
+	glBindVertexArray(0);
+
+	//draw_axes(ViewMatrix[cameraIndex], cameraIndex);
 }
 
 void prepare_spider(void) {
@@ -852,4 +936,206 @@ void update_table_motion(int timestamp_scene) {
 	static_objects[OBJ_TABLE].ModelMatrix[3] = glm::scale(static_objects[OBJ_TABLE].ModelMatrix[3],
 		glm::vec3(0.4f, 0.3f, 0.3f));
 	
+}
+
+enum TIGER_MOVE {
+	TIGER_MOVE1,
+	TIGER_MOVE2,
+	TIGER_MOVE3,
+	TIGER_MOVE4,
+	TIGER_MOVE5,
+	TIGER_MOVE6,
+	TIGER_MOVE7,
+	TIGER_MOVE8,
+	TIGER_MOVE9,
+	TIGER_MOVE10,
+	TIGER_MOVE11,
+	TIGER_MOVE12,
+	TIGER_MOVE13,
+	TIGER_MOVE14,
+	TIGER_MOVE15,
+	NUMBER_OF_TIGER_MOVE
+};
+TIGER_MOVE tiger_move_status = TIGER_MOVE1;
+int tiger_move_count = 0;
+
+/*if (tiger_move_count > 28) {
+	tiger_move_count = 0;
+	tiger_move_status = NUMBER_OF_TIGER_MOVE;
+}*/
+
+void update_tiger_motion(int timestamp_scene) {
+	
+	if (tiger_move_status == TIGER_MOVE1) {
+		if (tiger_move_count > 28) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE2;
+		}
+		tiger_move_count++;
+		tiger_data.move(1.0f);
+		if (tiger_move_count % 2 == 0)
+			tiger_data.rotate(2, tiger_data.vaxis);
+		
+	}
+	else if (tiger_move_status == TIGER_MOVE2) {
+		if (tiger_move_count > 60) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE3;
+		}
+		
+		tiger_move_count++;
+		
+		tiger_data.rotate(-3, tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE3) {
+		if (tiger_move_count > 62) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE4;
+		}
+
+		tiger_move_count++;
+		if(tiger_move_count < 10)
+			tiger_data.rotate(-2, tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE4) {
+		if (tiger_move_count > 69) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE5;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count < 41)
+			tiger_data.rotate(2, tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE5) {
+		if (tiger_move_count > 65) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE6;
+		}
+
+		tiger_move_count++;
+		tiger_data.rotate(3, tiger_data.vaxis);
+		tiger_data.move(0.6f);
+	}
+	else if (tiger_move_status == TIGER_MOVE6) {
+		if (tiger_move_count > 75) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE7;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count < 15 )
+			tiger_data.rotate(3, tiger_data.vaxis);
+		if(tiger_move_count > 43)
+			tiger_data.rotate(1, tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE7) {
+		if (tiger_move_count > 73) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE8;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count <= 30)
+		tiger_data.rotate_x(3, tiger_data.uaxis);
+		tiger_data.move(0.6f);
+	}
+	else if (tiger_move_status == TIGER_MOVE8) {
+		if (tiger_move_count > 70) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE9;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count <= 30)
+			tiger_data.rotate_x(3, tiger_data.uaxis);
+		tiger_data.move(0.6f);
+	}
+	else if (tiger_move_status == TIGER_MOVE9) {
+		if (tiger_move_count > 15) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE10;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count <= 10)
+			tiger_data.rotate(-2, -tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE10) {
+		if (tiger_move_count > 40) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE11;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count <= 20)
+			tiger_data.rotate(3, -tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE11) {
+		if (tiger_move_count > 45) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE12;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count <= 20)
+			tiger_data.rotate(-2, -tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE12) {
+		if (tiger_move_count > 35) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE13;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count <= 30)
+			tiger_data.rotate(3, -tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE13) {
+		if (tiger_move_count > 68) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE14;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count <= 30)
+			tiger_data.rotate(3, -tiger_data.vaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE14) {
+		if (tiger_move_count > 68) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE15;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count <= 30)
+			tiger_data.rotate(3, -tiger_data.vaxis);
+		if(tiger_move_count>= 20 && tiger_move_count <= 50)
+			tiger_data.rotate_x(3, tiger_data.uaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE15) {
+		if (tiger_move_count > 41) {
+			tiger_move_count = 0;
+			tiger_move_status = NUMBER_OF_TIGER_MOVE;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count >=10 && tiger_move_count <= 30) {
+			tiger_data.rotate_x(3, tiger_data.uaxis);
+			tiger_data.rotate(-3, tiger_data.vaxis);
+
+		}//if (tiger_move_count >= 20 && tiger_move_count <= 50)
+			//tiger_data.rotate_x(3, tiger_data.uaxis);
+		tiger_data.move(1.0f);
+	}
 }

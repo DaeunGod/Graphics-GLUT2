@@ -598,12 +598,18 @@ struct {
 
 	void init() {
 		glm::vec3 _vup = glm::vec3(0.0f, 0.0f, 1.0f), _vpn;
+		pos = glm::vec3(111.0f, 139.0f, 0.0f);
 		glm::vec3 center = pos + glm::vec3( 0.0f, -1.0f, 0.0f);
 
 		_vpn = pos - center;
 		uaxis = glm::normalize(glm::cross(_vup, _vpn));
 		vaxis = glm::normalize(glm::cross(_vpn, uaxis));
 		naxis = glm::normalize(_vpn);
+
+		rotation_angle_z = 0.0f;
+		rotation_angle_x = 0.0f;
+
+		tiger_data.rotate(90, tiger_data.vaxis);
 	}
 } tiger_data;
 
@@ -628,7 +634,7 @@ void define_animated_tiger(void) {
 	}
 	
 	//tiger_data.calcModelMatrix();
-	tiger_data.rotate(90, tiger_data.vaxis);
+	
 	//tiger_data.move(50.0f);
 }
 
@@ -954,6 +960,7 @@ enum TIGER_MOVE {
 	TIGER_MOVE13,
 	TIGER_MOVE14,
 	TIGER_MOVE15,
+	TIGER_MOVE16,
 	NUMBER_OF_TIGER_MOVE
 };
 TIGER_MOVE tiger_move_status = TIGER_MOVE1;
@@ -1111,7 +1118,7 @@ void update_tiger_motion(int timestamp_scene) {
 		tiger_data.move(1.0f);
 	}
 	else if (tiger_move_status == TIGER_MOVE14) {
-		if (tiger_move_count > 68) {
+		if (tiger_move_count > 66) {
 			tiger_move_count = 0;
 			tiger_move_status = TIGER_MOVE15;
 		}
@@ -1119,23 +1126,42 @@ void update_tiger_motion(int timestamp_scene) {
 		tiger_move_count++;
 		if (tiger_move_count <= 30)
 			tiger_data.rotate(3, -tiger_data.vaxis);
-		if(tiger_move_count>= 20 && tiger_move_count <= 50)
+		if(tiger_move_count>= 20 && tiger_move_count < 50)
 			tiger_data.rotate_x(3, tiger_data.uaxis);
 		tiger_data.move(1.0f);
 	}
 	else if (tiger_move_status == TIGER_MOVE15) {
-		if (tiger_move_count > 41) {
+		if (tiger_move_count > 19) {
+			tiger_move_count = 0;
+			tiger_move_status = TIGER_MOVE16;
+		}
+
+		tiger_move_count++;
+		if (tiger_move_count < 18) {
+			tiger_data.rotate_x(5, tiger_data.uaxis);
+			//tiger_data.rotate(-3, tiger_data.vaxis);
+
+		}//if (tiger_move_count >= 20 && tiger_move_count <= 50)
+			//tiger_data.rotate_x(3, tiger_data.uaxis);
+		tiger_data.move(1.0f);
+	}
+	else if (tiger_move_status == TIGER_MOVE16) {
+		if (tiger_move_count > 19) {
 			tiger_move_count = 0;
 			tiger_move_status = NUMBER_OF_TIGER_MOVE;
 		}
 
 		tiger_move_count++;
-		if (tiger_move_count >=10 && tiger_move_count <= 30) {
-			tiger_data.rotate_x(3, tiger_data.uaxis);
-			tiger_data.rotate(-3, tiger_data.vaxis);
+		if (tiger_move_count <= 18) {
+			//tiger_data.rotate_x(5, tiger_data.uaxis);
+			tiger_data.rotate(-5, tiger_data.vaxis);
 
 		}//if (tiger_move_count >= 20 && tiger_move_count <= 50)
-			//tiger_data.rotate_x(3, tiger_data.uaxis);
-		tiger_data.move(1.0f);
+		 //tiger_data.rotate_x(3, tiger_data.uaxis);
+		tiger_data.move(0.6f);
+	}
+	else if (tiger_move_status == NUMBER_OF_TIGER_MOVE) {
+		tiger_data.init();
+		tiger_move_status = TIGER_MOVE1;
 	}
 }

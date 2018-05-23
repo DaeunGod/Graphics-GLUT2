@@ -856,10 +856,21 @@ void greetings(char *program_name, char messages[][256], int n_message_lines) {
 	initialize_glew();
 }
 
-#define N_MESSAGE_LINES 1
+#define N_MESSAGE_LINES 12
 int main(int argc, char *argv[]) { 
-	char program_name[256] = "Sogang CSE4170 Our_House_GLSL_V_0.5";
-	char messages[N_MESSAGE_LINES][256] = { "    - Keys used: 'c', 'f', 'd', 'ESC'" };
+	char program_name[256] = "Sogang CSE4170 Our_House_GLSL_V_0.5 by 20131612";
+	char messages[N_MESSAGE_LINES][256] = { { "    - Keys used: 'c', 'f', '1', '2', '3', 'q', 'o', 'p', 'i', 'k', 'j', 'l', 'u', 'ESC'" }, 
+	{"    - '1': activate main camera"},
+	{ "    - '2': activate dynamic CCTV camera" },
+	{ "    - '3': vibrate every cameras" },
+	{ "    - 'q': switch main camera's or dynamic CCTV's rotate axis" },
+	{ "    - 'o': on/off viewing volume" },
+	{ "    - 'p': switch sub view port(static CCTV or orthogonal view)" },
+	{ "    - 'u': off every viewing volume except main camera" },
+	{ "    - 'i': increase far_clip of dynamic CCTV" },
+	{ "    - 'k': decrease far_clip of dynamic CCTV" },
+	{ "    - 'j': increase near_clip of dynamic CCTV" },
+	{ "    - 'l': decrease near_clip of dynamic CCTV" } };
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);

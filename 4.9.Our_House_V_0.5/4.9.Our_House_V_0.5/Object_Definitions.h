@@ -93,7 +93,7 @@ glm::vec3 spider_pos = glm::vec3(106.0f, 79.0f, 22.0f);
 Material_Parameters material_spider;
 
 // ben object
-#define N_BEN_FRAMES 30
+#define N_BEN_FRAMES 1
 GLuint ben_VBO, ben_VAO;
 int ben_n_triangles[N_BEN_FRAMES];
 int ben_vertex_offset[N_BEN_FRAMES];

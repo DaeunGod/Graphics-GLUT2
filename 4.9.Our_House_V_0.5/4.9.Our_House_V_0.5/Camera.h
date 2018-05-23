@@ -41,6 +41,7 @@ void define_3Ddot(void) {
 }
 
 typedef struct _CAMERA {
+	glm::vec3 prepos = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 pos, center;
 	glm::vec3 uaxis, vaxis, naxis;
 	float fov_y, aspect_ratio, near_clip, far_clip;
@@ -301,6 +302,7 @@ typedef struct _CAMERA {
 
 	void move(glm::vec3 dir) {
 		pos += dir;
+		prepos = pos;
 	}
 
 	void draw_3Ddot() {
@@ -333,6 +335,10 @@ typedef struct _CAMERA {
 		glUniform3fv(loc_primitive_color, 1, dotColor[cameraOrthoOrPerspective]);
 		glDrawArrays(GL_LINES, 22, 2);
 		glBindVertexArray(0);
+	}
+
+	void shake(glm::vec3 dir) {
+		pos += dir;
 	}
 
 } CAMERA;

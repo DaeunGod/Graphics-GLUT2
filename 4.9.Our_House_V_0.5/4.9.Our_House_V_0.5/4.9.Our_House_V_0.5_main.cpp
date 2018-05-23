@@ -73,6 +73,7 @@ void motion(int x, int y);
 void mousepress(int button, int state, int x, int y);
 void mousewheel(int button, int dir, int x, int y);
 void keySpecialOperation();
+void timer_scene4(int timestamp_scene);
 //void prepare_geom_obj(int geom_obj_ID, char *filename, GEOM_OBJ_TYPE geom_obj_type);
 
 void set_ViewMatrix_from_camera_frame(glm::mat4 &_ViewMatrix, CAMERA &_camera) {
@@ -371,6 +372,14 @@ void keyboard(unsigned char key, int x, int y) {
 
 		break;
 
+	case '3':
+		for (int i = 0; i < NUMBER_OF_CAMERAS - 1; i++) {
+			camera[i].prepos = camera[i].pos;
+		}
+
+		glutTimerFunc(10, timer_scene4, 0);
+		break;
+
 	case 'q':
 		if(currentCamera == CAMERA_MAIN)
 			camera[currentCamera].rotateDirection = (camera[currentCamera].rotateDirection + 1) % 3;
@@ -425,18 +434,17 @@ void keySpecialUp(int key, int x, int y) {
 }
 
 void keySpecialOperation() {
-	static int aaaaaaaaaaaaangle = 0;
 	if (keyState[GLUT_KEY_LEFT] == true) {
-		path_pos += glm::vec3(1.0f, 0.0f, 0.0f);
+		//path_pos += glm::vec3(1.0f, 0.0f, 0.0f);
 	}
 	if (keyState[GLUT_KEY_RIGHT] == true) {
-		path_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
+		//path_pos += glm::vec3(-1.0f, 0.0f, 0.0f);
 	}
 	if (keyState[GLUT_KEY_UP] == true) {
-		path_pos += glm::vec3(0.0f, 1.0f, 0.0f);
+		//path_pos += glm::vec3(0.0f, 1.0f, 0.0f);
 	}
 	if (keyState[GLUT_KEY_DOWN] == true) {
-		path_pos += glm::vec3(0.0f, -1.0f, 0.0f);
+		//path_pos += glm::vec3(0.0f, -1.0f, 0.0f);
 	}
 	//printf("%f %f %f\n", path_pos.x, path_pos.y, path_pos.z);
 }
@@ -621,6 +629,36 @@ void timer_scene3(int timestamp_scene) {
 
 	glutPostRedisplay();
 	glutTimerFunc(1, timer_scene3, (timestamp_scene + 15) % INT_MAX);
+}
+
+void timer_scene4(int timestamp_scene) {
+	static int timer_count = 0;//update_ben_motion(timestamp_scene);
+
+	timer_count++;
+	for (int i = 0; i < NUMBER_OF_CAMERAS - 1; i++) {
+		camera[i].pos = camera[i].prepos;
+	}
+	if( timer_count > 100 ){
+		timer_count = 0;
+		for (int i = 0; i < NUMBER_OF_CAMERAS - 1; i++) {
+			set_ViewMatrix_from_camera_frame(ViewMatrix[i], camera[i]);
+		}
+		
+
+		return ;
+	}
+
+	for (int i = 0; i < NUMBER_OF_CAMERAS - 1; i++) {
+		int x1 = rand() % 3-1;
+		int y1 = rand() % 3-1;
+		int z1 = rand() % 3-1;
+
+		camera[i].shake(glm::vec3(x1, y1, z1));
+		set_ViewMatrix_from_camera_frame(ViewMatrix[i], camera[i]);
+	}
+
+	glutPostRedisplay();
+	glutTimerFunc(10, timer_scene4, timestamp_scene % INT_MAX);
 }
 
 
